@@ -684,7 +684,7 @@ function learningView(state) {
   return `${modeNav(state.activeMode)}<div>${subjectSwitcher(state.activeSubject)}${state.activeMode === "explore" ? explorerMap(state, task.subject) : ""}<section class="question-card${resultClass}" aria-labelledby="question-title">
     <div class="progress-line"><span class="subject-tag">${SUBJECTS[task.subject]}</span><span>${modeDetail}</span></div>
     ${visualMarkup(task, session.currentStep)}
-    ${feedback}<div class="question-heading"><h1 id="question-title">${escapeHtml(prompt)}</h1><button class="listen-button" type="button" id="listen-question" data-speech="${escapeHtml(task.subject === "english" ? (session.currentStep === 1 ? presentation.prerequisiteSpeech : presentation.speech) : prompt)}" data-lang="${task.subject === "english" ? (session.currentStep === 1 ? presentation.prerequisiteSpeechLang : presentation.speechLang) ?? "en-GB" : "pl-PL"}" aria-label="Posłuchaj pytania"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9v6h4l5 4V5L9 9H5Zm12 1c1.3 1.3 1.3 2.7 0 4m2.5-6.5c3 3 3 6 0 9"/></svg><span>Posłuchaj</span></button></div>
+    ${feedback}<div class="question-heading"><h1 id="question-title">${escapeHtml(prompt)}</h1><button class="listen-button" type="button" id="listen-question" data-audio="./audio/${task.id}-${session.currentStep === 1 ? "prerequisite" : "question"}.mp3" data-speech="${escapeHtml(task.subject === "english" ? (session.currentStep === 1 ? presentation.prerequisiteSpeech : presentation.speech) : prompt)}" data-lang="${task.subject === "english" ? (session.currentStep === 1 ? presentation.prerequisiteSpeechLang : presentation.speechLang) ?? "en-GB" : "pl-PL"}" aria-label="Posłuchaj pytania"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9v6h4l5 4V5L9 9H5Zm12 1c1.3 1.3 1.3 2.7 0 4m2.5-6.5c3 3 3 6 0 9"/></svg><span>Posłuchaj</span></button></div>
     <form class="answer-form" id="answer-form" aria-labelledby="question-title">
       <div class="choice-grid">${choices.map(choice => `<button class="answer-choice" type="submit" name="answer" value="${escapeHtml(choice)}">${escapeHtml(choice)}</button>`).join("")}</div>
       <button class="unsure-button" type="submit" name="answer" value="nie wiem">Nie wiem</button>
@@ -729,7 +729,17 @@ export function renderApp(root, state) {
   root.innerHTML = `${header()}${content}`;
 }
 
-export function speakQuestion(button, synthesis = globalThis.speechSynthesis, Utterance = globalThis.SpeechSynthesisUtterance) {
+export function speakQuestion(button, synthesis = globalThis.speechSynthesis, Utterance = globalThis.SpeechSynthesisUtterance, AudioPlayer = globalThis.Audio) {
+  const stop = () => button.classList.remove("is-speaking");
+  if (button.dataset.audio && AudioPlayer) {
+    synthesis?.cancel();
+    const clip = new AudioPlayer(button.dataset.audio);
+    button.classList.add("is-speaking");
+    clip.addEventListener("ended", stop);
+    clip.addEventListener("error", stop);
+    clip.play()?.catch(stop);
+    return true;
+  }
   if (!synthesis || !Utterance) return false;
   synthesis.cancel();
   const utterance = new Utterance(button.dataset.speech);
@@ -737,7 +747,6 @@ export function speakQuestion(button, synthesis = globalThis.speechSynthesis, Ut
   const polishVoices = synthesis.getVoices?.().filter(voice => voice.lang.toLowerCase().startsWith("pl")) ?? [];
   if (utterance.lang.startsWith("pl")) utterance.voice = polishVoices.find(voice => voice.name === "Zosia") ?? polishVoices.find(voice => voice.localService) ?? polishVoices[0];
   utterance.rate = utterance.lang.startsWith("pl") ? 0.9 : 0.86;
-  const stop = () => button.classList.remove("is-speaking");
   button.classList.add("is-speaking");
   utterance.addEventListener("end", stop);
   utterance.addEventListener("error", stop);
