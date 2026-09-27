@@ -82,3 +82,25 @@ test("review mode selects a due task and never unseen content", () => {
   state.knowledge["TIME.ADD_ACROSS_HOUR"] = { status: "SUPPORTED", nextReviewAt: 0 };
   assert.equal(selectNextTask(state, "review").atomId, "TIME.ADD_ACROSS_HOUR");
 });
+
+test("the task bank covers every required topic group", () => {
+  const topics = new Set(TASKS.map(task => task.topic));
+  [
+    "clock", "elapsed", "calendar", "roman", "length",
+    "living", "organisms", "life-processes", "anthropogenic", "stimulus", "senses",
+    "numbers", "classroom", "pronouns", "be", "articles", "adjective-noun",
+  ].forEach(topic => assert.ok(topics.has(topic), `missing ${topic}`));
+});
+
+test("every learning task asks one question and supports an adaptive response", () => {
+  TASKS.filter(task => task.kind !== "end").forEach(task => {
+    assert.equal((task.prompt.match(/\?/g) ?? []).length, 1, task.id);
+    assert.ok(task.hint || task.example || task.prerequisitePrompt, task.id);
+  });
+});
+
+test("each answer records one allowed action", () => {
+  const { state, action } = applyAnswer(createInitialState(), "wrong");
+  assert.ok(Object.values(ACTIONS).includes(action));
+  assert.equal(state.history.at(-1).action, action);
+});
