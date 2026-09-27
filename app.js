@@ -251,7 +251,7 @@ export const SCENES = Object.freeze({
     replayStep: 1,
     steps: [
       { audio: "./audio/scenes/nitka-math-1.mp3", lang: "pl-PL", visual: "runway", transcript: "Wielkie wyzwanie Nitki: przygotować pokaz mody i nie spóźnić kokardy." },
-      { audio: "./audio/scenes/nitka-math-2.mp3", lang: "pl-PL", visual: "clock-start", transcript: "Jest 14:45. Pokaz za 30 minut. Nitka stawia na 15:45. Czy miarka czasu się zaplątała?" },
+      { audio: "./audio/scenes/nitka-math-2.mp3", lang: "pl-PL", visual: "clock-start", transcript: "Jest 14:45. Pokaz zaczyna się za 30 minut. Nitka obstawia 15:45, ale jej miarka czasu chyba się zaplątała." },
       { audio: "./audio/scenes/nitka-math-3.mp3", lang: "pl-PL", visual: "clock-jumps", transcript: "Robimy dwa spokojne skoki: 15 minut do 15:00 i jeszcze 15 minut do 15:15." },
     ],
     check: { prompt: "O której zacznie się pokaz Nitki?", choices: ["15:00", "15:15", "15:45"], answers: ["15:15", "1515"] },
@@ -931,7 +931,7 @@ if (typeof document !== "undefined") {
       commit({ ...state, screen: button.dataset.screen }, "", focusSelector);
     }));
     root.querySelectorAll("[data-subject-filter]").forEach(button => button.addEventListener("click", () => commit(switchSubject(state, button.dataset.subjectFilter), "", `[data-subject-filter="${button.dataset.subjectFilter}"]`)));
-    root.querySelector("[data-scene-start]")?.addEventListener("click", event => commit(beginScene(state, event.currentTarget.dataset.sceneStart)));
+    root.querySelector("[data-scene-start]")?.addEventListener("click", event => commit(beginScene(state, event.currentTarget.dataset.sceneStart), "", "#scene-audio"));
     root.querySelector("[data-scene-next]")?.addEventListener("click", () => commit(advanceScene(state), "", "[data-scene-next]"));
     root.querySelector("[data-scene-skip]")?.addEventListener("click", () => commit(skipScene(state), "Scenka pominięta.", ".answer-choice"));
     root.querySelector("[data-scene-replay]")?.addEventListener("click", () => {
@@ -943,7 +943,11 @@ if (typeof document !== "undefined") {
     root.querySelector("#scene-answer-form")?.addEventListener("submit", event => {
       event.preventDefault();
       const { state: next, result } = answerScene(state, event.submitter?.value ?? "");
-      commit(next, result === "correct" ? "Dobrze. Teraz sprawdzimy tę wiedzę w nowej sytuacji." : "Wróćmy do jednego potrzebnego kadru.");
+      commit(
+        next,
+        result === "correct" ? "Dobrze. Teraz sprawdzimy tę wiedzę w nowej sytuacji." : "Wróćmy do jednego potrzebnego kadru.",
+        result === "correct" ? ".answer-choice" : "[data-scene-next]",
+      );
     });
     root.querySelector("#answer-form")?.addEventListener("submit", event => {
       event.preventDefault();

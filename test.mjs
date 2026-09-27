@@ -409,6 +409,19 @@ test("the math task transfers the scene rule to a new time", () => {
   assert.equal(SCENES[task.id].check.prompt.includes("Nitki"), true);
 });
 
+test("the recorded math frame keeps its approved transcript", () => {
+  assert.equal(
+    SCENES["time-after-1445"].steps[1].transcript,
+    "Jest 14:45. Pokaz zaczyna się za 30 minut. Nitka obstawia 15:45, ale jej miarka czasu chyba się zaplątała.",
+  );
+});
+
+test("scene transitions restore keyboard focus to the next micro-step", async () => {
+  const source = await readFile(new URL("./app.js", import.meta.url), "utf8");
+  assert.match(source, /commit\(beginScene\([^;]+, "", "#scene-audio"\)/);
+  assert.match(source, /result === "correct" \? "\.answer-choice" : "\[data-scene-next\]"/);
+});
+
 test("a prerequisite question uses a neutral earlier-step graphic", () => {
   const root = { className: "", innerHTML: "" };
   const state = switchMode(createInitialState(), "focus");
