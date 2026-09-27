@@ -31,12 +31,12 @@ export const TASKS = [
     subject: "math",
     topic: "elapsed",
     prerequisiteAtomId: "TIME.READ_MINUTES",
-    prompt: "Która godzina będzie 30 minut po 14:45?",
-    answers: ["15:15", "1515"],
-    hint: "Najpierw policz minuty do 15:00.",
-    prerequisitePrompt: "Ile minut brakuje od 14:45 do 15:00?",
-    prerequisiteAnswers: ["15", "pietnascie"],
-    example: "Od 13:50 do 14:00 mija 10 minut.",
+    prompt: "Która godzina będzie 30 minut po 16:35?",
+    answers: ["17:05", "1705"],
+    hint: "Najpierw policz minuty do 17:00.",
+    prerequisitePrompt: "Ile minut brakuje od 16:35 do 17:00?",
+    prerequisiteAnswers: ["25", "dwadziescia piec"],
+    example: "Od 14:45 do 15:00 mija 15 minut.",
     visual: "clock",
   },
   {
@@ -242,9 +242,55 @@ export const TASKS = [
   },
 ];
 
+export const SCENES = Object.freeze({
+  "time-after-1445": {
+    id: "nitka-math-time",
+    taskId: "time-after-1445",
+    subject: "math",
+    title: "Pokaz za pół godziny",
+    replayStep: 1,
+    steps: [
+      { audio: "./audio/scenes/nitka-math-1.mp3", lang: "pl-PL", visual: "runway", transcript: "Wielkie wyzwanie Nitki: przygotować pokaz mody i nie spóźnić kokardy." },
+      { audio: "./audio/scenes/nitka-math-2.mp3", lang: "pl-PL", visual: "clock-start", transcript: "Jest 14:45. Pokaz zaczyna się za 30 minut. Nitka obstawia 15:45, ale jej miarka czasu chyba się zaplątała." },
+      { audio: "./audio/scenes/nitka-math-3.mp3", lang: "pl-PL", visual: "clock-jumps", transcript: "Robimy dwa spokojne skoki: 15 minut do 15:00 i jeszcze 15 minut do 15:15." },
+    ],
+    check: { prompt: "O której zacznie się pokaz Nitki?", choices: ["15:00", "15:15", "15:45"], answers: ["15:15", "1515"] },
+  },
+  "living-mushroom": {
+    id: "nitka-nature-organism",
+    taskId: "living-mushroom",
+    subject: "nature",
+    title: "Kapelusz, który nie rośnie",
+    replayStep: 1,
+    steps: [
+      { audio: "./audio/scenes/nitka-nature-1.mp3", lang: "pl-PL", visual: "garden", transcript: "Nitka urządza ogród do zdjęcia nowej kolekcji: królik, roślina i bardzo elegancki kapelusz." },
+      { audio: "./audio/scenes/nitka-nature-2.mp3", lang: "pl-PL", visual: "living", transcript: "Królik i roślina rosną, oddychają i potrzebują wody. To organizmy." },
+      { audio: "./audio/scenes/nitka-nature-3.mp3", lang: "pl-PL", visual: "hat", transcript: "Kapelusz może być w kwiatki, ale sam nie rośnie i nie oddycha. Moda ma granice." },
+    ],
+    check: { prompt: "Co w ogrodzie Nitki jest organizmem?", choices: ["królik i roślina", "kapelusz", "wszystko"], answers: ["królik i roślina", "krolik i roslina"] },
+  },
+  "english-an-apple": {
+    id: "nitka-english-an",
+    taskId: "english-an-apple",
+    subject: "english",
+    title: "An orange scarf",
+    replayStep: 1,
+    steps: [
+      { audio: "./audio/scenes/nitka-english-1.mp3", lang: "pl-PL", visual: "scarf", transcript: "Nitka wybiera pomarańczowy szalik. Po angielsku orange zaczyna się samogłoską." },
+      { audio: "./audio/scenes/nitka-english-2.mp3", lang: "en-GB", visual: "english-line", transcript: "An orange scarf." },
+      { audio: "./audio/scenes/nitka-english-3.mp3", lang: "pl-PL", visual: "article", transcript: "Przed orange używamy an: an orange scarf." },
+    ],
+    check: { prompt: "Który napis pasuje do pomarańczowego szalika?", choices: ["a orange scarf", "an orange scarf"], answers: ["an orange scarf"] },
+  },
+});
+
+export function getSceneForTask(taskId) {
+  return SCENES[taskId] ?? null;
+}
+
 const PRESENTATIONS = {
   "clock-minute-hand": { prompt: "Ile minut pokazuje długa wskazówka?", visualLabel: "Zegar z długą wskazówką na jedenastce", choices: ["50", "55", "60"], prerequisiteChoices: ["5", "10", "15"] },
-  "time-after-1445": { prompt: "Jest 14:45. Która godzina będzie za 30 minut?", visualLabel: "Oś czasu od 14:45 o trzydzieści minut do przodu", choices: ["15:05", "15:15", "15:45"], prerequisiteChoices: ["5", "15", "45"] },
+  "time-after-1445": { prompt: "Jest 16:35. Która godzina będzie za 30 minut?", visualLabel: "Oś czasu od szesnastej trzydzieści pięć przez siedemnastą", choices: ["16:55", "17:05", "17:35"], prerequisiteChoices: ["15", "25", "35"] },
   "calendar-next-saturday": { prompt: "Poniedziałek to 8 maja. Kiedy będzie sobota?", visualLabel: "Kartka kalendarza z poniedziałkiem ósmego maja", choices: ["10 maja", "13 maja", "15 maja"], prerequisiteChoices: ["wtorek", "środa", "sobota"] },
   "roman-nine": { prompt: "Jaką liczbę oznacza IX?", visualLabel: "Rzymski zapis IX", choices: ["6", "9", "11"], prerequisiteChoices: ["5", "10", "50"] },
   "length-room-unit": { prompt: "Pokój ma długość 315. Która jednostka pasuje?", visualLabel: "Miarka z długością pokoju trzysta piętnaście", choices: ["cm", "m", "km"], prerequisiteChoices: ["10", "100", "1000"] },
@@ -308,6 +354,7 @@ function createSession(currentTaskId = TASKS[0].id) {
     subject: null,
     lastFeedback: "",
     lastResult: "",
+    scene: { taskId: "", step: 0, phase: "story", feedback: "", seenTaskIds: [] },
   };
 }
 
@@ -341,7 +388,7 @@ export function switchMode(state, activeMode) {
 export function switchSubject(state, activeSubject) {
   if (!["all", ...Object.keys(SUBJECTS)].includes(activeSubject)) return state;
   const next = structuredClone(state);
-  const fields = ["currentTaskId", "currentStep", "diagnosticCount", "helpLevel", "consecutiveErrors", "correctStreak", "lastFeedback", "lastResult"];
+  const fields = ["currentTaskId", "currentStep", "diagnosticCount", "helpLevel", "consecutiveErrors", "correctStreak", "lastFeedback", "lastResult", "scene"];
   Object.values(next.modeSessions).forEach(session => {
     session.taskBySubject ??= {};
     session.subjectState ??= {};
@@ -418,6 +465,71 @@ export function selectNextTask(state, modeId = state.activeMode) {
 
 export function getTaskById(id) {
   return TASKS.find(task => task.id === id) ?? TASKS[0];
+}
+
+export function shouldOfferScene(state, task) {
+  const scene = state.modeSessions[state.activeMode].scene;
+  return state.activeMode === "explore"
+    && Boolean(SCENES[task?.id])
+    && !state.knowledge[task.atomId]
+    && !scene.seenTaskIds.includes(task.id);
+}
+
+export function beginScene(state, taskId) {
+  if (!SCENES[taskId]) return state;
+  const next = structuredClone(state);
+  next.screen = "learn";
+  next.modeSessions[next.activeMode].scene = {
+    ...next.modeSessions[next.activeMode].scene,
+    taskId,
+    step: 0,
+    phase: "story",
+    feedback: "",
+  };
+  return next;
+}
+
+export function advanceScene(state) {
+  const next = structuredClone(state);
+  const sceneState = next.modeSessions[next.activeMode].scene;
+  const scene = SCENES[sceneState.taskId];
+  if (!scene) return state;
+  if (sceneState.step < scene.steps.length - 1) sceneState.step += 1;
+  else sceneState.phase = "check";
+  sceneState.feedback = "";
+  return next;
+}
+
+function finishScene(next, taskId) {
+  const sceneState = next.modeSessions[next.activeMode].scene;
+  if (!sceneState.seenTaskIds.includes(taskId)) sceneState.seenTaskIds.push(taskId);
+  sceneState.taskId = "";
+  sceneState.step = 0;
+  sceneState.phase = "story";
+  sceneState.feedback = "";
+}
+
+export function answerScene(state, value) {
+  const next = structuredClone(state);
+  const sceneState = next.modeSessions[next.activeMode].scene;
+  const scene = SCENES[sceneState.taskId];
+  if (!scene || sceneState.phase !== "check") return { state, result: "no_response" };
+  const answer = normalizeAnswer(value);
+  const correct = scene.check.answers.map(normalizeAnswer).includes(answer);
+  if (correct) finishScene(next, scene.taskId);
+  else {
+    sceneState.phase = "story";
+    sceneState.step = scene.replayStep;
+    sceneState.feedback = "Wróćmy tylko do jednego potrzebnego kadru.";
+  }
+  return { state: next, result: correct ? "correct" : "incorrect" };
+}
+
+export function skipScene(state) {
+  const next = structuredClone(state);
+  const taskId = next.modeSessions[next.activeMode].scene.taskId;
+  if (taskId) finishScene(next, taskId);
+  return next;
 }
 
 export function getActionContent(action, task) {
@@ -519,6 +631,10 @@ export function applyAnswer(state, value) {
     session.helpLevel += 1;
   }
 
+  if (action === ACTIONS.GIVE_EXAMPLE && SCENES[task.id]) {
+    session.scene = { ...session.scene, taskId: task.id, step: 0, phase: "story", feedback: "" };
+  }
+
   session.lastFeedback = action === ACTIONS.END_SESSION && result !== "correct"
     ? "To jeszcze nie jest pewne. Zapisuję ten punkt i proponuję wrócić do niego w Spokojnym stoliku."
     : action === ACTIONS.END_SESSION
@@ -558,7 +674,7 @@ function visualMarkup(task, step = 0) {
   if (step === 1) {
     const prerequisiteVisuals = {
       "clock-minute-hand": `<circle class="visual-paper" cx="160" cy="90" r="61"/><path d="M160 34v10M216 90h-10M160 146v-10M104 90h10M160 90l47-28"/><circle class="visual-fill" cx="160" cy="90" r="6"/>`,
-      "time-after-1445": `<path d="M65 92h190M239 78l16 14-16 14"/><text x="82" y="65">14:45</text><text x="238" y="65">15:00</text>`,
+      "time-after-1445": `<path d="M65 92h190M239 78l16 14-16 14"/><text x="82" y="65">16:35</text><text x="238" y="65">17:00</text>`,
       "calendar-next-saturday": `<text class="visual-word" x="92" y="102">PON</text><path d="M132 90h56m-14-14 14 14-14 14"/><text class="visual-word" x="238" y="102">?</text>`,
       "roman-nine": `<rect class="visual-paper" x="100" y="28" width="120" height="124" rx="16"/><text class="visual-hero" x="160" y="118">X</text>`,
       "length-room-unit": `<text class="visual-word" x="95" y="102">1 m</text><path d="M130 90h60m-14-14 14 14-14 14"/><text class="visual-word" x="238" y="102">? cm</text>`,
@@ -577,7 +693,7 @@ function visualMarkup(task, step = 0) {
     };
     const prerequisiteLabels = {
       "clock-minute-hand": "Zegar z długą wskazówką na dwójce",
-      "time-after-1445": "Oś czasu od 14:45 do 15:00",
+      "time-after-1445": "Oś czasu od 16:35 do 17:00",
       "calendar-next-saturday": "Poniedziałek, strzałka i następny dzień",
       "roman-nine": "Rzymska liczba X",
       "length-room-unit": "Jeden metr przeliczany na centymetry",
@@ -600,7 +716,7 @@ function visualMarkup(task, step = 0) {
   const close = "</svg></div>";
   const visuals = {
     "clock-minute-hand": `<circle class="visual-paper" cx="160" cy="90" r="67"/><circle cx="160" cy="90" r="61"/><path d="M160 34v10M216 90h-10M160 146v-10M104 90h10"/><path class="clock-hour" d="M160 90l30 20"/><path class="clock-minute" d="M160 90l-31-48"/><circle class="visual-fill" cx="160" cy="90" r="6"/>`,
-    "time-after-1445": `<path d="M38 96h244"/><circle cx="48" cy="96" r="8"/><circle cx="160" cy="96" r="8"/><circle cx="272" cy="96" r="8"/><circle class="travel-dot" cx="48" cy="96" r="13"/><text x="48" y="135">14:45</text><text x="160" y="135">15:00</text><text x="272" y="135">?</text><text class="visual-small" x="160" y="55">+ 30 min</text>`,
+    "time-after-1445": `<path d="M38 96h244"/><circle cx="48" cy="96" r="8"/><circle cx="160" cy="96" r="8"/><circle cx="272" cy="96" r="8"/><circle class="travel-dot" cx="48" cy="96" r="13"/><text x="48" y="135">16:35</text><text x="160" y="135">17:00</text><text x="272" y="135">?</text><text class="visual-small" x="160" y="55">+ 30 min</text>`,
     "calendar-next-saturday": `<rect class="visual-paper" x="75" y="25" width="170" height="135" rx="14"/><path d="M75 62h170M110 25v24M210 25v24"/><text x="160" y="52">MAJ</text><text x="112" y="105">8</text><path class="calendar-path" d="M132 99h64"/><text x="216" y="105">?</text><text class="visual-small" x="110" y="136">PON</text><text class="visual-small" x="216" y="136">SOB</text>`,
     "roman-nine": `<rect class="visual-paper" x="82" y="25" width="156" height="130" rx="18"/><text class="visual-hero" x="160" y="118">IX</text>`,
     "length-room-unit": `<path d="M45 120h230M52 120V82M86 120V96M120 120V82M154 120V96M188 120V82M222 120V96M268 120V82"/><path class="measure-line" d="M52 58h216M52 58l15-10M52 58l15 10M268 58l-15-10M268 58l-15 10"/><text x="160" y="44">315 ?</text>`,
@@ -644,6 +760,10 @@ function homeView(state) {
   return `<section aria-labelledby="welcome-title">
     <h1 id="welcome-title">Co robimy?</h1>
     <p class="intro">Wybierz tryb. ${known ? `Masz rozpoczęte ${known} obszary.` : "Zaczniemy spokojnie."}</p>
+    <div class="nitka-home">
+      <img src="./images/kroliczka-nitka.png" alt="Króliczka Nitka, projektantka mody i prowadząca misje">
+      <div><p class="eyebrow">Nowe mikro-misje</p><h2>Króliczka Nitka ma plan</h2><p>Krótka historia, jeden sprytny problem i jedno pytanie.</p></div>
+    </div>
     <div class="mode-grid">
       ${Object.entries(MODES).map(([id, mode]) => `<button class="mode-card" data-mode="${id}">
         ${modeIcon(id)}<h2>${mode.name}</h2><p>${mode.description}</p><span class="mode-arrow" aria-hidden="true">→</span>
@@ -671,10 +791,46 @@ function explorerMap(state, subject) {
   }).join("")}</div>`;
 }
 
+function sceneIntroView(task) {
+  const scene = SCENES[task.id];
+  return `<section class="scene-card scene-intro" aria-labelledby="scene-title">
+    <img class="nitka-portrait" src="./images/kroliczka-nitka.png" alt="Króliczka Nitka z notesem i miarką krawiecką">
+    <div><p class="eyebrow">Misja Nitki · ${SUBJECTS[scene.subject]}</p>
+    <h1 id="scene-title">${escapeHtml(scene.title)}</h1>
+    <p class="intro">Jedna krótka historia. Potem jedno pytanie.</p>
+    <button class="primary-button" type="button" data-scene-start="${task.id}">Zaczynam misję</button></div>
+  </section>`;
+}
+
+function sceneView(state) {
+  const sceneState = state.modeSessions[state.activeMode].scene;
+  const scene = SCENES[sceneState.taskId];
+  if (!scene) return "";
+  if (sceneState.phase === "check") return `<section class="scene-card" aria-labelledby="scene-question">
+    <p class="eyebrow">Jedno pytanie</p><h1 id="scene-question">${escapeHtml(scene.check.prompt)}</h1>
+    <form id="scene-answer-form" class="answer-form" aria-labelledby="scene-question">
+      <div class="choice-grid">${scene.check.choices.map(choice => `<button class="answer-choice" type="submit" name="answer" value="${escapeHtml(choice)}">${escapeHtml(choice)}</button>`).join("")}</div>
+    </form>
+  </section>`;
+  const step = scene.steps[sceneState.step];
+  return `<section class="scene-card" aria-labelledby="scene-title">
+    <div class="scene-progress" aria-label="Kadr ${sceneState.step + 1} z ${scene.steps.length}">${sceneState.step + 1}/${scene.steps.length}</div>
+    <div class="scene-frame scene-${escapeHtml(step.visual)}"><img src="./images/kroliczka-nitka.png" alt="Króliczka Nitka prowadzi misję"><div class="scene-prop" aria-hidden="true"></div></div>
+    ${sceneState.feedback ? `<p class="feedback">${escapeHtml(sceneState.feedback)}</p>` : ""}
+    <h1 id="scene-title">${escapeHtml(scene.title)}</h1>
+    <p class="scene-transcript">${escapeHtml(step.transcript)}</p>
+    <audio id="scene-audio" controls preload="metadata" src="${step.audio}">Nagranie: ${escapeHtml(step.transcript)}</audio>
+    <div class="scene-actions"><button class="quiet-button" type="button" data-scene-replay>Jeszcze raz</button><button class="quiet-button" type="button" data-scene-skip>Pomiń</button><button class="primary-button" type="button" data-scene-next>Dalej</button></div>
+  </section>`;
+}
+
 function learningView(state) {
   const task = selectNextTask(state);
   if (!task) return `${modeNav(state.activeMode)}<div>${subjectSwitcher(state.activeSubject)}<section class="question-card empty-state"><div class="visual-cue" aria-hidden="true">✓</div><h1>Na teraz wszystko powtórzone</h1><p class="intro">Wróć później.</p><button class="primary-button" data-screen="home">Wybierz inny tryb</button></section></div>`;
   const session = state.modeSessions[state.activeMode];
+  const map = state.activeMode === "explore" ? explorerMap(state, task.subject) : "";
+  if (session.scene.taskId) return `${modeNav(state.activeMode)}<div>${subjectSwitcher(state.activeSubject)}${map}${sceneView(state)}</div>`;
+  if (shouldOfferScene(state, task)) return `${modeNav(state.activeMode)}<div>${subjectSwitcher(state.activeSubject)}${map}${sceneIntroView(task)}</div>`;
   const presentation = getTaskPresentation(task);
   const prompt = currentPrompt(task, session);
   const choices = session.currentStep === 1 ? presentation.prerequisiteChoices : presentation.choices;
@@ -775,6 +931,24 @@ if (typeof document !== "undefined") {
       commit({ ...state, screen: button.dataset.screen }, "", focusSelector);
     }));
     root.querySelectorAll("[data-subject-filter]").forEach(button => button.addEventListener("click", () => commit(switchSubject(state, button.dataset.subjectFilter), "", `[data-subject-filter="${button.dataset.subjectFilter}"]`)));
+    root.querySelector("[data-scene-start]")?.addEventListener("click", event => commit(beginScene(state, event.currentTarget.dataset.sceneStart), "", "#scene-audio"));
+    root.querySelector("[data-scene-next]")?.addEventListener("click", () => commit(advanceScene(state), "", "[data-scene-next]"));
+    root.querySelector("[data-scene-skip]")?.addEventListener("click", () => commit(skipScene(state), "Scenka pominięta.", ".answer-choice"));
+    root.querySelector("[data-scene-replay]")?.addEventListener("click", () => {
+      const audio = root.querySelector("#scene-audio");
+      if (!audio) return;
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    });
+    root.querySelector("#scene-answer-form")?.addEventListener("submit", event => {
+      event.preventDefault();
+      const { state: next, result } = answerScene(state, event.submitter?.value ?? "");
+      commit(
+        next,
+        result === "correct" ? "Dobrze. Teraz sprawdzimy tę wiedzę w nowej sytuacji." : "Wróćmy do jednego potrzebnego kadru.",
+        result === "correct" ? ".answer-choice" : "[data-scene-next]",
+      );
+    });
     root.querySelector("#answer-form")?.addEventListener("submit", event => {
       event.preventDefault();
       const answer = event.submitter?.value ?? new FormData(event.currentTarget).get("answer");

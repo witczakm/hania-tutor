@@ -3,7 +3,10 @@ import assert from "node:assert/strict";
 import { readFile, stat } from "node:fs/promises";
 import {
   ACTIONS,
+  advanceScene,
+  answerScene,
   applyAnswer,
+  beginScene,
   chooseAction,
   createInitialState,
   evaluateAnswer,
@@ -12,12 +15,130 @@ import {
   normalizeAnswer,
   renderApp,
   saveState,
+  SCENES,
   selectNextTask,
+  shouldOfferScene,
+  skipScene,
   switchMode,
   switchSubject,
   speakQuestion,
   TASKS,
 } from "./app.js";
+
+test("the pilot has one scene per subject and one check question per scene", () => {
+  assert.deepEqual(Object.keys(SCENES), ["time-after-1445", "living-mushroom", "english-an-apple"]);
+  Object.values(SCENES).forEach(scene => {
+    assert.ok(scene.steps.length >= 3 && scene.steps.length <= 5, scene.id);
+    assert.equal((scene.check.prompt.match(/\?/g) ?? []).length, 1, scene.id);
+    assert.ok(scene.check.choices.length >= 2 && scene.check.choices.length <= 3, scene.id);
+    assert.ok(scene.check.choices.some(choice => scene.check.answers.map(normalizeAnswer).includes(normalizeAnswer(choice))), scene.id);
+  });
+});
+
+test("a new explorer atom offers its matching Nitka scene once", () => {
+  const state = switchSubject(switchMode(createInitialState(), "explore"), "math");
+  state.knowledge["TIME.READ_MINUTES"] = { status: "INDEPENDENT" };
+  state.modeSessions.explore.currentTaskId = "time-after-1445";
+  state.modeSessions.explore.taskBySubject.math = "time-after-1445";
+  const task = TASKS.find(item => item.id === "time-after-1445");
+  assert.equal(shouldOfferScene(state, task), true);
+  assert.equal(shouldOfferScene(skipScene(beginScene(state, task.id)), task), false);
+});
+
+test("a wrong scene answer replays one frame without changing knowledge", () => {
+  let state = beginScene(createInitialState(), "time-after-1445");
+  state = advanceScene(advanceScene(advanceScene(state)));
+  const before = structuredClone(state.knowledge);
+  const result = answerScene(state, "15:45");
+  assert.equal(result.result, "incorrect");
+  assert.equal(result.state.modeSessions.focus.scene.step, SCENES["time-after-1445"].replayStep);
+  assert.deepEqual(result.state.knowledge, before);
+});
+
+test("a correct scene answer reveals the transfer task without granting mastery", () => {
+  const state = beginScene(createInitialState(), "time-after-1445");
+  state.modeSessions.focus.scene.phase = "check";
+  const result = answerScene(state, "15:15");
+  assert.equal(result.result, "correct");
+  assert.equal(result.state.modeSessions.focus.scene.taskId, "");
+  assert.equal(result.state.modeSessions.focus.scene.seenTaskIds.includes("time-after-1445"), true);
+  assert.equal(result.state.knowledge["TIME.ADD_ACROSS_HOUR"], undefined);
+});
+
+test("old saved sessions receive safe scene defaults", () => {
+  const old = createInitialState();
+  Object.values(old.modeSessions).forEach(session => { delete session.scene; });
+  const loaded = loadState(memoryStorage({ "hania-tutor-state-v1": JSON.stringify(old) }));
+  assert.deepEqual(loaded.modeSessions.focus.scene, createInitialState().modeSessions.focus.scene);
+});
+
+test("subject switching preserves the scene cursor for each subject", () => {
+  let state = switchSubject(switchMode(createInitialState(), "explore"), "math");
+  state = advanceScene(beginScene(state, "time-after-1445"));
+  state = switchSubject(state, "nature");
+  state = beginScene(state, "living-mushroom");
+  state = switchSubject(state, "math");
+  assert.equal(state.modeSessions.explore.scene.taskId, "time-after-1445");
+  assert.equal(state.modeSessions.explore.scene.step, 1);
+});
+
+test("a located gap opens its matching scene as the single GIVE_EXAMPLE action", () => {
+  const state = createInitialState();
+  state.modeSessions.focus.currentTaskId = "time-after-1445";
+  state.modeSessions.focus.currentStep = 1;
+  const result = applyAnswer(state, "25");
+  assert.equal(result.action, ACTIONS.GIVE_EXAMPLE);
+  assert.equal(result.state.modeSessions.focus.scene.taskId, "time-after-1445");
+});
+
+test("a new explorer task shows one Nitka invitation instead of the task question", () => {
+  const root = { className: "", innerHTML: "" };
+  const state = switchSubject(switchMode(createInitialState(), "explore"), "math");
+  state.knowledge["TIME.READ_MINUTES"] = { status: "INDEPENDENT" };
+  state.modeSessions.explore.currentTaskId = "time-after-1445";
+  state.modeSessions.explore.taskBySubject.math = "time-after-1445";
+  renderApp(root, state);
+  assert.match(root.innerHTML, /data-scene-start="time-after-1445"/);
+  assert.doesNotMatch(root.innerHTML, /id="answer-form"/);
+});
+
+test("a scene frame keeps navigation available beside recorded audio", () => {
+  const root = { className: "", innerHTML: "" };
+  const state = beginScene(createInitialState(), "time-after-1445");
+  renderApp(root, state);
+  assert.match(root.innerHTML, /<audio[^>]+controls/);
+  assert.match(root.innerHTML, /nitka-math-1\.mp3/);
+  assert.match(root.innerHTML, /Wielkie wyzwanie Nitki/);
+  assert.match(root.innerHTML, /data-scene-next/);
+  assert.match(root.innerHTML, /data-scene-skip/);
+});
+
+test("the scene check replaces playback controls with exactly one question", () => {
+  const root = { className: "", innerHTML: "" };
+  const state = beginScene(createInitialState(), "english-an-apple");
+  state.modeSessions.focus.scene.phase = "check";
+  renderApp(root, state);
+  assert.equal((root.innerHTML.match(/\?/g) ?? []).length, 1);
+  assert.match(root.innerHTML, /id="scene-answer-form"/);
+  assert.doesNotMatch(root.innerHTML, /data-scene-next/);
+});
+
+test("home introduces Nitka without removing the three learning modes", () => {
+  const root = { className: "", innerHTML: "" };
+  renderApp(root, createInitialState());
+  assert.match(root.innerHTML, /Króliczka Nitka/);
+  assert.equal((root.innerHTML.match(/class="mode-card"/g) ?? []).length, 3);
+});
+
+test("scene completion survives mode changes and knowledge stays shared", () => {
+  let state = beginScene(createInitialState(), "living-mushroom");
+  state.modeSessions.focus.scene.phase = "check";
+  state = answerScene(state, "królik i roślina").state;
+  state = switchMode(state, "explore");
+  state = switchMode(state, "focus");
+  assert.equal(state.modeSessions.focus.scene.seenTaskIds.includes("living-mushroom"), true);
+  assert.equal(state.knowledge["NATURE.LIVING_CLASSIFICATION"], undefined);
+});
 
 test("normalization catches changes to case, whitespace and Polish punctuation", () => {
   assert.equal(normalizeAnswer("  Piętnaście. "), "pietnascie");
@@ -272,6 +393,35 @@ test("every question and prerequisite has a recorded audio file", async () => {
   }
 });
 
+test("every Nitka scene step has a non-empty recorded clip", async () => {
+  for (const scene of Object.values(SCENES)) {
+    for (const step of scene.steps) {
+      const clip = await stat(new URL(step.audio, import.meta.url));
+      assert.ok(clip.size > 1_000, step.audio);
+    }
+  }
+});
+
+test("the math task transfers the scene rule to a new time", () => {
+  const task = TASKS.find(item => item.id === "time-after-1445");
+  assert.equal(task.prompt.includes("16:35"), true);
+  assert.equal(evaluateAnswer(task, "17:05"), "correct");
+  assert.equal(SCENES[task.id].check.prompt.includes("Nitki"), true);
+});
+
+test("the recorded math frame keeps its approved transcript", () => {
+  assert.equal(
+    SCENES["time-after-1445"].steps[1].transcript,
+    "Jest 14:45. Pokaz zaczyna się za 30 minut. Nitka obstawia 15:45, ale jej miarka czasu chyba się zaplątała.",
+  );
+});
+
+test("scene transitions restore keyboard focus to the next micro-step", async () => {
+  const source = await readFile(new URL("./app.js", import.meta.url), "utf8");
+  assert.match(source, /commit\(beginScene\([^;]+, "", "#scene-audio"\)/);
+  assert.match(source, /result === "correct" \? "\.answer-choice" : "\[data-scene-next\]"/);
+});
+
 test("a prerequisite question uses a neutral earlier-step graphic", () => {
   const root = { className: "", innerHTML: "" };
   const state = switchMode(createInitialState(), "focus");
@@ -319,6 +469,15 @@ test("CSS includes calm educational motion with a reduced-motion path", async ()
   assert.match(css, /@keyframes signal-travel/);
   assert.match(css, /\.answer-choice/);
   assert.match(css, /prefers-reduced-motion/);
+});
+
+test("Nitka art exists and scene motion has a reduced-motion path", async () => {
+  const image = await stat(new URL("./images/kroliczka-nitka.png", import.meta.url));
+  const css = await readFile(new URL("./styles.css", import.meta.url), "utf8");
+  assert.ok(image.size > 100_000);
+  assert.match(css, /\.scene-frame/);
+  assert.match(css, /@keyframes scene-reveal/);
+  assert.match(css, /prefers-reduced-motion[\s\S]*\.scene-frame/);
 });
 
 test("speech cleanup keeps its button reference after the click event ends", () => {
