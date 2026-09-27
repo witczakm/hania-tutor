@@ -255,11 +255,11 @@ const PRESENTATIONS = {
   "stimulus-light": { prompt: "Latarka świeci w oczy. Co jest bodźcem?", visualLabel: "Latarka wysyłająca światło w stronę oka", choices: ["światło", "oko", "latarka"], prerequisiteChoices: ["tak", "nie"] },
   "senses-sound": { prompt: "Co odbiera dźwięki?", visualLabel: "Ucho odbierające fale dźwiękowe", choices: ["ucho", "oko", "nos"], prerequisiteChoices: ["słuch", "wzrok", "węch"] },
   "english-thirteen": { prompt: "Która liczba to thirteen?", speech: "Which number is thirteen?", prerequisiteSpeech: "Which number is ten?", visualLabel: "Liczba trzynaście i trzynaście kropek", choices: ["12", "13", "30"], prerequisiteChoices: ["5", "10", "20"] },
-  "english-pencil-case": { prompt: "Który napis oznacza piórnik?", speech: "Which phrase means pencil case?", prerequisiteSpeech: "Which word means pencil?", visualLabel: "Piórnik z dwoma ołówkami", choices: ["pencil case", "book", "desk"], prerequisiteChoices: ["pencil", "pen", "book"] },
+  "english-pencil-case": { prompt: "Który napis oznacza piórnik?", speech: "Który napis pasuje do tego obrazka?", prerequisiteSpeech: "Jak po angielsku nazywa się ten przedmiot?", speechLang: "pl-PL", prerequisiteSpeechLang: "pl-PL", visualLabel: "Piórnik z dwoma ołówkami", choices: ["pencil case", "book", "desk"], prerequisiteChoices: ["pencil", "pen", "book"] },
   "english-they": { prompt: "Anna i Ola. She czy they?", speech: "Anna and Ola. She or they?", prerequisiteSpeech: "Which pronoun fits one girl?", visualLabel: "Dwie osoby stojące obok siebie", choices: ["she", "they"], prerequisiteChoices: ["she", "he", "they"] },
   "english-he-is": { prompt: "He ___ ten. Co pasuje?", speech: "He, blank, ten. What fits?", prerequisiteSpeech: "She, blank, ten. What fits?", visualLabel: "Zdanie He, puste miejsce, ten", choices: ["am", "is", "are"], prerequisiteChoices: ["am", "is", "are"] },
   "english-an-apple": { prompt: "___ apple. Co pasuje?", speech: "Blank apple. A or an?", prerequisiteSpeech: "What is the first letter of apple?", visualLabel: "Jabłko obok pustego miejsca na a lub an", choices: ["a", "an"], prerequisiteChoices: ["a", "e", "p"] },
-  "english-brown-desk": { prompt: "Który napis oznacza brązowe biurko?", speech: "Which phrase means brown desk?", prerequisiteSpeech: "What does desk mean?", visualLabel: "Brązowe biurko", choices: ["brown desk", "desk brown"], prerequisiteChoices: ["biurko", "krzesło", "książka"] },
+  "english-brown-desk": { prompt: "Który napis oznacza brązowe biurko?", speech: "Który napis pasuje do tego obrazka?", prerequisiteSpeech: "Co znaczy pokazany angielski wyraz?", speechLang: "pl-PL", prerequisiteSpeechLang: "pl-PL", visualLabel: "Brązowe biurko", choices: ["brown desk", "desk brown"], prerequisiteChoices: ["biurko", "krzesło", "książka"] },
 };
 
 export function getTaskPresentation(task) {
@@ -341,7 +341,7 @@ export function switchMode(state, activeMode) {
 export function switchSubject(state, activeSubject) {
   if (!["all", ...Object.keys(SUBJECTS)].includes(activeSubject)) return state;
   const next = structuredClone(state);
-  const fields = ["currentTaskId", "currentStep", "diagnosticCount", "helpLevel", "consecutiveErrors", "correctStreak", "completedCount", "lastFeedback", "lastResult"];
+  const fields = ["currentTaskId", "currentStep", "diagnosticCount", "helpLevel", "consecutiveErrors", "correctStreak", "lastFeedback", "lastResult"];
   Object.values(next.modeSessions).forEach(session => {
     session.taskBySubject ??= {};
     session.subjectState ??= {};
@@ -556,7 +556,26 @@ function escapeHtml(value) {
 function visualMarkup(task, step = 0) {
   const presentation = getTaskPresentation(task);
   if (step === 1) {
-    return `<div class="learning-visual prerequisite-visual" data-learning-visual data-visual-step="prerequisite" role="img" aria-label="Wracamy do jednego wcześniejszego kroku"><svg viewBox="0 0 320 180" aria-hidden="true" focusable="false"><circle class="visual-fill" cx="95" cy="90" r="24"/><circle class="visual-paper" cx="225" cy="90" r="24"/><path d="M190 90H128m0 0 18-16m-18 16 18 16"/><text class="visual-small" x="160" y="145">1 KROK WCZEŚNIEJ</text></svg></div>`;
+    const prerequisiteVisuals = {
+      "clock-minute-hand": `<circle class="visual-paper" cx="160" cy="90" r="61"/><path d="M160 34v10M216 90h-10M160 146v-10M104 90h10M160 90l47-28"/><circle class="visual-fill" cx="160" cy="90" r="6"/>`,
+      "time-after-1445": `<path d="M65 92h190M239 78l16 14-16 14"/><text x="82" y="65">14:45</text><text x="238" y="65">15:00</text>`,
+      "calendar-next-saturday": `<text class="visual-word" x="92" y="102">PON</text><path d="M132 90h56m-14-14 14 14-14 14"/><text class="visual-word" x="238" y="102">?</text>`,
+      "roman-nine": `<rect class="visual-paper" x="100" y="28" width="120" height="124" rx="16"/><text class="visual-hero" x="160" y="118">X</text>`,
+      "length-room-unit": `<text class="visual-word" x="95" y="102">1 m</text><path d="M130 90h60m-14-14 14 14-14 14"/><text class="visual-word" x="238" y="102">? cm</text>`,
+      "living-mushroom": `<path d="M160 145V68M160 97c-35-4-48-22-48-40 31 0 48 16 48 40Zm0 0c35-4 48-22 48-40-31 0-48 16-48 40ZM105 145h110"/>`,
+      "organisms-cells": `<circle class="visual-paper" cx="160" cy="53" r="25"/><path class="visual-fill-soft" d="M105 153c4-49 23-75 55-75s51 26 55 75Z"/>`,
+      "life-process-growing": `<path d="M100 145V115M215 145V62M100 120c-20-3-28-16-28-28 18 0 28 10 28 28Zm115-25c-31-4-42-24-42-42 27 0 42 16 42 42ZM60 145h200"/>`,
+      "anthropogenic-road": `<path class="visual-fill-soft" d="M115 155 145 35h30l30 120Z"/><path d="M160 48v22m0 20v22m0 20v20M80 155h160"/><circle class="visual-paper" cx="245" cy="50" r="18"/><path d="M245 68v45m-24-24h48"/>`,
+      "stimulus-light": `<path class="visual-paper" d="M68 72h55v36H68z"/><path d="M123 90h118M209 64c25 15 25 37 0 52M235 50c42 25 42 55 0 80"/>`,
+      "senses-sound": `<path d="M65 75c17 10 17 20 0 30M92 57c35 21 35 65 0 86"/><path class="visual-paper" d="M205 40c-41 0-57 31-49 61 7 23 26 23 28 42h25c0-28-21-28-18-44 2-12 16-13 23-5 9-8 16-18 16-31 0-14-9-23-25-23Z"/>`,
+      "english-thirteen": `<text class="visual-hero" x="160" y="116">TEN</text>`,
+      "english-pencil-case": `<path d="M92 133 218 42M85 143l28-7-20-22-8 29ZM210 40l17 23"/>`,
+      "english-they": `<circle class="visual-paper" cx="160" cy="57" r="28"/><path class="visual-fill-soft" d="M105 153c4-48 22-72 55-72s51 24 55 72Z"/>`,
+      "english-he-is": `<text class="visual-word" x="70" y="104">SHE</text><rect class="visual-paper" x="117" y="65" width="86" height="54" rx="12"/><text class="visual-word" x="255" y="104">TEN</text>`,
+      "english-an-apple": `<path class="visual-fill-soft" d="M160 55c-42-22-69 15-56 55 13 39 56 52 80 8 27-51 1-81-24-63Z"/><path d="M160 57c-4-18 2-29 15-36M165 38c13-11 26-8 36-2"/>`,
+      "english-brown-desk": `<path class="desk-top" d="M55 65h210v45H55z"/><path d="M80 110v52M240 110v52"/>`,
+    };
+    return `<div class="learning-visual prerequisite-visual" data-learning-visual data-visual-step="prerequisite" data-prerequisite-for="${task.id}" role="img" aria-label="Obraz do pytania pomocniczego"><svg viewBox="0 0 320 180" aria-hidden="true" focusable="false">${prerequisiteVisuals[task.id]}</svg></div>`;
   }
   const open = `<div class="learning-visual visual-${task.visual}" data-learning-visual data-visual-step="main" role="img" aria-label="${escapeHtml(presentation.visualLabel)}"><svg viewBox="0 0 320 180" aria-hidden="true" focusable="false">`;
   const close = "</svg></div>";
@@ -646,7 +665,7 @@ function learningView(state) {
   return `${modeNav(state.activeMode)}<div>${subjectSwitcher(state.activeSubject)}${state.activeMode === "explore" ? explorerMap(state, task.subject) : ""}<section class="question-card${resultClass}" aria-labelledby="question-title">
     <div class="progress-line"><span class="subject-tag">${SUBJECTS[task.subject]}</span><span>${modeDetail}</span></div>
     ${visualMarkup(task, session.currentStep)}
-    ${feedback}<div class="question-heading"><h1 id="question-title">${escapeHtml(prompt)}</h1><button class="listen-button" type="button" id="listen-question" data-speech="${escapeHtml(task.subject === "english" ? (session.currentStep === 1 ? presentation.prerequisiteSpeech : presentation.speech) : prompt)}" data-lang="${task.subject === "english" ? "en-GB" : "pl-PL"}" aria-label="Posłuchaj pytania"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9v6h4l5 4V5L9 9H5Zm12 1c1.3 1.3 1.3 2.7 0 4m2.5-6.5c3 3 3 6 0 9"/></svg><span>Posłuchaj</span></button></div>
+    ${feedback}<div class="question-heading"><h1 id="question-title">${escapeHtml(prompt)}</h1><button class="listen-button" type="button" id="listen-question" data-speech="${escapeHtml(task.subject === "english" ? (session.currentStep === 1 ? presentation.prerequisiteSpeech : presentation.speech) : prompt)}" data-lang="${task.subject === "english" ? (session.currentStep === 1 ? presentation.prerequisiteSpeechLang : presentation.speechLang) ?? "en-GB" : "pl-PL"}" aria-label="Posłuchaj pytania"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9v6h4l5 4V5L9 9H5Zm12 1c1.3 1.3 1.3 2.7 0 4m2.5-6.5c3 3 3 6 0 9"/></svg><span>Posłuchaj</span></button></div>
     <form class="answer-form" id="answer-form" aria-labelledby="question-title">
       <div class="choice-grid">${choices.map(choice => `<button class="answer-choice" type="submit" name="answer" value="${escapeHtml(choice)}">${escapeHtml(choice)}</button>`).join("")}</div>
       <button class="unsure-button" type="submit" name="answer" value="nie wiem">Nie wiem</button>
@@ -721,7 +740,7 @@ if (typeof document !== "undefined") {
 
   const bindEvents = () => {
     root.querySelectorAll("[data-mode]").forEach(button => button.addEventListener("click", () => commit(switchMode(state, button.dataset.mode), "", `[data-mode="${button.dataset.mode}"]`)));
-    root.querySelectorAll("[data-screen]").forEach(button => button.addEventListener("click", () => commit({ ...state, screen: button.dataset.screen })));
+    root.querySelectorAll("[data-screen]").forEach(button => button.addEventListener("click", () => commit({ ...state, screen: button.dataset.screen }, "", `[data-screen="${button.dataset.screen}"]`)));
     root.querySelectorAll("[data-subject-filter]").forEach(button => button.addEventListener("click", () => commit(switchSubject(state, button.dataset.subjectFilter), "", `[data-subject-filter="${button.dataset.subjectFilter}"]`)));
     root.querySelector("#answer-form")?.addEventListener("submit", event => {
       event.preventDefault();

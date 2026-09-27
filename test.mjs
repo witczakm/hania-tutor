@@ -222,6 +222,13 @@ test("subject focus keeps diagnosis and feedback separate per subject", () => {
   assert.equal(state.modeSessions.focus.currentStep, 1);
 });
 
+test("the five-item review limit stays global while subjects change", () => {
+  let state = switchMode(createInitialState(), "review");
+  state.modeSessions.review.completedCount = 4;
+  state = switchSubject(state, "english");
+  assert.equal(state.modeSessions.review.completedCount, 4);
+});
+
 test("explorer resumes its unseen ready cursor", () => {
   const state = switchMode(switchSubject(createInitialState(), "math"), "explore");
   state.modeSessions.explore.currentTaskId = "roman-nine";
@@ -262,7 +269,16 @@ test("a prerequisite question uses a neutral earlier-step graphic", () => {
   state.modeSessions.focus.currentStep = 1;
   renderApp(root, state);
   assert.match(root.innerHTML, /data-visual-step="prerequisite"/);
+  assert.match(root.innerHTML, /data-prerequisite-for="clock-minute-hand"/);
   assert.doesNotMatch(root.innerHTML, /Zegar z długą wskazówką na jedenastce/);
+});
+
+test("vocabulary speech never says the correct answer", () => {
+  const pencilCase = getTaskPresentation(TASKS.find(task => task.id === "english-pencil-case"));
+  const brownDesk = getTaskPresentation(TASKS.find(task => task.id === "english-brown-desk"));
+  assert.doesNotMatch(normalizeAnswer(pencilCase.speech), /pencil case/);
+  assert.doesNotMatch(normalizeAnswer(pencilCase.prerequisiteSpeech), /pencil/);
+  assert.doesNotMatch(normalizeAnswer(brownDesk.speech), /brown desk/);
 });
 
 test("HTML exposes the application shell and polite feedback", async () => {
