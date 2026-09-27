@@ -692,4 +692,3 @@ gh pr create --fill
 ```
 
 Po scaleniu sprawdzić `https://witczakm.github.io/hania-tutor/`: strona zwraca 200, ilustracja i wszystkie dziewięć plików scen zwracają 200/206, a pełna ścieżka matematyczna działa bez błędów konsoli.
-
