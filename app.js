@@ -443,6 +443,33 @@ export function switchSubject(state, activeSubject) {
   return next;
 }
 
+function moveToTask(state, task) {
+  if (!task) return state;
+  const next = structuredClone(state);
+  const session = next.modeSessions[next.activeMode];
+  session.currentTaskId = task.id;
+  session.taskBySubject[next.activeSubject] = task.id;
+  session.currentStep = 0;
+  session.diagnosticCount = 0;
+  session.helpLevel = 0;
+  session.consecutiveErrors = 0;
+  session.lastFeedback = "";
+  session.lastResult = "";
+  next.screen = "learn";
+  return next;
+}
+
+export function previousTask(state) {
+  const tasks = TASKS.filter(task => state.activeSubject === "all" || task.subject === state.activeSubject);
+  const currentId = state.modeSessions[state.activeMode].currentTaskId;
+  const index = tasks.findIndex(task => task.id === currentId);
+  return moveToTask(state, index > 0 ? tasks[index - 1] : null);
+}
+
+export function restartSubjectTasks(state) {
+  return moveToTask(state, TASKS.find(task => state.activeSubject === "all" || task.subject === state.activeSubject));
+}
+
 export function saveState(storage, state) {
   storage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
@@ -911,6 +938,8 @@ function learningView(state) {
   const feedback = session.lastFeedback ? `<p class="feedback">${escapeHtml(session.lastFeedback)}</p>` : "";
   const modeDetail = state.activeMode === "review" ? `pozostało: ${5 - session.completedCount}` : MODES[state.activeMode].name;
   const resultClass = session.lastResult ? ` result-${session.lastResult}` : "";
+  const subjectTasks = TASKS.filter(item => state.activeSubject === "all" || item.subject === state.activeSubject);
+  const canGoBack = subjectTasks.findIndex(item => item.id === task.id) > 0;
   const listenButton = task.subject === "english" ? `<button class="listen-button" type="button" id="listen-question" data-audio="./audio/${task.id}-${session.currentStep === 1 ? "prerequisite" : "question"}.mp3" data-speech="${escapeHtml(session.currentStep === 1 ? presentation.prerequisiteSpeech : presentation.speech)}" data-lang="${(session.currentStep === 1 ? presentation.prerequisiteSpeechLang : presentation.speechLang) ?? "en-GB"}" aria-label="Posłuchaj pytania"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9v6h4l5 4V5L9 9H5Zm12 1c1.3 1.3 1.3 2.7 0 4m2.5-6.5c3 3 3 6 0 9"/></svg><span>Posłuchaj</span></button>` : "";
   return `${modeNav(state.activeMode)}<div>${subjectSwitcher(state.activeSubject)}${state.activeMode === "explore" ? explorerMap(state, task.subject) : ""}<section class="question-card${resultClass}" aria-labelledby="question-title">
     <div class="progress-line"><span class="subject-tag">${SUBJECTS[task.subject]}</span><span>${modeDetail}</span></div>
@@ -920,7 +949,7 @@ function learningView(state) {
       <div class="choice-grid">${choices.map(choice => `<button class="answer-choice" type="submit" name="answer" value="${escapeHtml(choice)}">${escapeHtml(choice)}</button>`).join("")}</div>
       <button class="unsure-button" type="submit" name="answer" value="nie wiem">Nie wiem</button>
     </form>
-    <div class="session-actions"><button class="quiet-button" id="take-break">Potrzebuję przerwy</button></div>
+    <div class="session-actions">${canGoBack ? '<button class="quiet-button" type="button" data-task-back>← Poprzednie zadanie</button>' : ""}<button class="quiet-button" type="button" data-task-restart>Od początku działu</button><button class="quiet-button" id="take-break">Potrzebuję przerwy</button></div>
   </section></div>`;
 }
 
@@ -1033,6 +1062,8 @@ if (typeof document !== "undefined") {
     root.querySelector("#listen-question")?.addEventListener("click", event => {
       speakQuestion(event.currentTarget);
     });
+    root.querySelector("[data-task-back]")?.addEventListener("click", () => commit(previousTask(state), "Poprzednie zadanie.", ".answer-choice"));
+    root.querySelector("[data-task-restart]")?.addEventListener("click", () => commit(restartSubjectTasks(state), "Zaczynamy od pierwszego zadania w tym dziale.", ".answer-choice"));
     root.querySelector("#resume")?.addEventListener("click", () => {
       const next = structuredClone(state);
       const session = next.modeSessions[next.activeMode];

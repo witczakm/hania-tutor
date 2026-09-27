@@ -14,6 +14,8 @@ import {
   loadState,
   normalizeAnswer,
   renderApp,
+  previousTask,
+  restartSubjectTasks,
   saveState,
   SCENES,
   selectNextTask,
@@ -76,6 +78,18 @@ test("a replayed teaching frame returns to the same quiz question", () => {
   state = advanceScene(state);
   assert.equal(state.modeSessions.focus.scene.phase, "check");
   assert.equal(state.modeSessions.focus.scene.quizIndex, 0);
+});
+
+test("task navigation goes to the previous task and can restart the subject", () => {
+  let state = switchSubject(switchMode(createInitialState(), "focus"), "math");
+  state.modeSessions.focus.currentTaskId = "calendar-next-saturday";
+  state.modeSessions.focus.taskBySubject.math = "calendar-next-saturday";
+  state.knowledge["TIME.READ_MINUTES"] = { status: "INDEPENDENT" };
+  state = previousTask(state);
+  assert.equal(state.modeSessions.focus.currentTaskId, "time-after-1445");
+  state = restartSubjectTasks(state);
+  assert.equal(state.modeSessions.focus.currentTaskId, "clock-minute-hand");
+  assert.equal(state.knowledge["TIME.READ_MINUTES"].status, "INDEPENDENT");
 });
 
 test("old saved sessions receive safe scene defaults", () => {
@@ -421,6 +435,16 @@ test("learning view leads with a graphic and large answer choices", () => {
   assert.match(root.innerHTML, /data-learning-visual/);
   assert.match(root.innerHTML, /class="choice-grid"/);
   assert.doesNotMatch(root.innerHTML, /<input/);
+});
+
+test("a later task offers previous-task and restart-subject controls", () => {
+  const root = { className: "", innerHTML: "" };
+  const state = switchSubject(switchMode(createInitialState(), "focus"), "math");
+  state.modeSessions.focus.currentTaskId = "calendar-next-saturday";
+  state.modeSessions.focus.taskBySubject.math = "calendar-next-saturday";
+  renderApp(root, state);
+  assert.match(root.innerHTML, /data-task-back/);
+  assert.match(root.innerHTML, /data-task-restart/);
 });
 
 test("Polish exercises do not offer the rejected synthetic voice", () => {
