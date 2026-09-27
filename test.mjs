@@ -330,3 +330,25 @@ test("speech cleanup keeps its button reference after the click event ends", () 
   utterance.listeners.end();
   assert.equal(classes.has("is-speaking"), false);
 });
+
+test("Polish speech prefers the local Zosia voice", () => {
+  const button = {
+    dataset: { speech: "Która jest godzina?", lang: "pl-PL" },
+    classList: { add() {}, remove() {} },
+  };
+  let utterance;
+  class FakeUtterance {
+    constructor(text) { this.text = text; utterance = this; }
+    addEventListener() {}
+  }
+  const voices = [
+    { name: "Default", lang: "pl-PL", localService: true },
+    { name: "Zosia", lang: "pl-PL", localService: true },
+  ];
+  const synthesis = { cancel() {}, speak() {}, getVoices: () => voices };
+
+  speakQuestion(button, synthesis, FakeUtterance);
+
+  assert.equal(utterance.voice, voices[1]);
+  assert.equal(utterance.rate, 0.9);
+});

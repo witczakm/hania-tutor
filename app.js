@@ -734,7 +734,9 @@ export function speakQuestion(button, synthesis = globalThis.speechSynthesis, Ut
   synthesis.cancel();
   const utterance = new Utterance(button.dataset.speech);
   utterance.lang = button.dataset.lang || "pl-PL";
-  utterance.rate = 0.86;
+  const polishVoices = synthesis.getVoices?.().filter(voice => voice.lang.toLowerCase().startsWith("pl")) ?? [];
+  if (utterance.lang.startsWith("pl")) utterance.voice = polishVoices.find(voice => voice.name === "Zosia") ?? polishVoices.find(voice => voice.localService) ?? polishVoices[0];
+  utterance.rate = utterance.lang.startsWith("pl") ? 0.9 : 0.86;
   const stop = () => button.classList.remove("is-speaking");
   button.classList.add("is-speaking");
   utterance.addEventListener("end", stop);
