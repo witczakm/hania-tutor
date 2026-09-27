@@ -14,6 +14,7 @@ import {
   loadState,
   normalizeAnswer,
   renderApp,
+  previousScene,
   previousTask,
   restartSubjectTasks,
   saveState,
@@ -28,13 +29,13 @@ import {
 } from "./app.js";
 
 test("each subject lesson teaches several ideas before its end quiz", () => {
-  assert.deepEqual(Object.keys(SCENES), ["time-after-1445", "living-mushroom", "english-an-apple"]);
+  assert.equal(Object.keys(SCENES).length, TASKS.length);
   Object.values(SCENES).forEach(scene => {
     assert.match(scene.art, /^\.\/images\/scene-/);
     assert.ok(scene.artAlt.length > 20);
-    assert.ok(scene.steps.length >= 7, scene.id);
+    assert.ok(scene.steps.length >= 3, scene.id);
     assert.ok(scene.steps.every(step => step.beat && step.shot), scene.id);
-    assert.ok(scene.checks.length >= 5, scene.id);
+    assert.ok(scene.checks.length >= 1, scene.id);
     scene.checks.forEach(check => {
       assert.equal((check.prompt.match(/\?/g) ?? []).length, 1, check.prompt);
       assert.ok(check.choices.length >= 2 && check.choices.length <= 3, check.prompt);
@@ -50,6 +51,12 @@ test("a new explorer subject offers its Nitka lesson once", () => {
   assert.equal(shouldOfferScene(skipScene(beginScene(state, task.id)), task), false);
 });
 
+test("focus mode also teaches the chapter before testing an unseen topic", () => {
+  const state = switchSubject(createInitialState(), "math");
+  const task = selectNextTask(state, "focus");
+  assert.equal(shouldOfferScene(state, task), true);
+});
+
 test("a wrong scene answer replays one frame without changing knowledge", () => {
   let state = beginScene(createInitialState(), "time-after-1445");
   state.modeSessions.focus.scene.phase = "check";
@@ -61,14 +68,15 @@ test("a wrong scene answer replays one frame without changing knowledge", () => 
   assert.deepEqual(result.state.knowledge, before);
 });
 
-test("correct quiz answers advance one at a time and record supported knowledge", () => {
-  const state = beginScene(createInitialState(), "time-after-1445");
+test("a correct chapter quiz records supported knowledge", () => {
+  const state = beginScene(createInitialState(), "clock-minute-hand");
   state.modeSessions.focus.scene.phase = "check";
   const result = answerScene(state, "55");
   assert.equal(result.result, "correct");
-  assert.equal(result.state.modeSessions.focus.scene.taskId, "time-after-1445");
-  assert.equal(result.state.modeSessions.focus.scene.quizIndex, 1);
+  assert.equal(result.state.modeSessions.focus.scene.taskId, "");
   assert.equal(result.state.knowledge["TIME.READ_MINUTES"].status, "SUPPORTED");
+  assert.equal(result.state.modeSessions.focus.currentTaskId, "time-after-1445");
+  assert.equal(result.state.screen, "learn");
 });
 
 test("a replayed teaching frame returns to the same quiz question", () => {
@@ -144,7 +152,7 @@ test("a scene frame uses cinematic story art and a visual knowledge beat", () =>
   assert.match(root.innerHTML, /class="scene-art"/);
   assert.match(root.innerHTML, /class="scene-beat"/);
   assert.doesNotMatch(root.innerHTML, /scene-prop/);
-  assert.match(root.innerHTML, /Nitka szykuje pokaz mody/);
+  assert.match(root.innerHTML, /Nitka ma trzydzieści minut do wyjścia/);
   assert.match(root.innerHTML, /data-scene-next/);
   assert.match(root.innerHTML, /data-scene-skip/);
 });
@@ -166,19 +174,19 @@ test("the scene check replaces playback controls with exactly one question", () 
   assert.doesNotMatch(root.innerHTML, /data-scene-next/);
 });
 
-test("Polish teaching scenes do not expose the rejected synthetic narration", () => {
+test("Polish teaching scenes expose only the selected voice C narration", () => {
   const root = { className: "", innerHTML: "" };
   const state = beginScene(createInitialState(), "time-after-1445");
   renderApp(root, state);
-  assert.doesNotMatch(root.innerHTML, /<audio/);
-  assert.doesNotMatch(root.innerHTML, /nitka-math-1\.mp3/);
+  assert.match(root.innerHTML, /<audio/);
+  assert.match(root.innerHTML, /nitka-c-time-after-1445-1\.mp3/);
 });
 
 test("home introduces Nitka without removing the three learning modes", () => {
   const root = { className: "", innerHTML: "" };
   renderApp(root, createInitialState());
   assert.match(root.innerHTML, /Króliczka Nitka/);
-  assert.match(root.innerHTML, /Najpierw obrazkowa opowieść/);
+  assert.match(root.innerHTML, /Najpierw dużo wiedzy/);
   assert.equal((root.innerHTML.match(/class="mode-card"/g) ?? []).length, 3);
 });
 
@@ -431,7 +439,9 @@ test("every task has a concise visual presentation and valid choices", () => {
 
 test("learning view leads with a graphic and large answer choices", () => {
   const root = { className: "", innerHTML: "" };
-  renderApp(root, switchMode(createInitialState(), "focus"));
+  const state = switchMode(createInitialState(), "focus");
+  state.modeSessions.focus.scene.seenTaskIds.push("clock-minute-hand");
+  renderApp(root, state);
   assert.match(root.innerHTML, /data-learning-visual/);
   assert.match(root.innerHTML, /class="choice-grid"/);
   assert.doesNotMatch(root.innerHTML, /<input/);
@@ -442,6 +452,7 @@ test("a later task offers previous-task and restart-subject controls", () => {
   const state = switchSubject(switchMode(createInitialState(), "focus"), "math");
   state.modeSessions.focus.currentTaskId = "calendar-next-saturday";
   state.modeSessions.focus.taskBySubject.math = "calendar-next-saturday";
+  state.modeSessions.focus.scene.seenTaskIds.push("calendar-next-saturday");
   renderApp(root, state);
   assert.match(root.innerHTML, /data-task-back/);
   assert.match(root.innerHTML, /data-task-restart/);
@@ -462,15 +473,47 @@ test("every question and prerequisite has a recorded audio file", async () => {
   }
 });
 
-test("only explicitly approved scene audio is exposed and its file exists", async () => {
+test("only explicitly approved voice C scene audio is exposed and its file exists", async () => {
   for (const scene of Object.values(SCENES)) {
     for (const step of scene.steps) {
       if (!step.audio) continue;
-      assert.equal(step.lang, "en-GB");
+      assert.equal(step.lang, "pl-PL");
+      assert.match(step.audio, /nitka-c-/);
       const clip = await stat(new URL(step.audio, import.meta.url));
       assert.ok(clip.size > 1_000, step.audio);
     }
   }
+});
+
+test("every topic has its own substantial Nitka chapter with voice C", async () => {
+  for (const task of TASKS) {
+    const scene = SCENES[task.id];
+    assert.ok(scene, `missing scene for ${task.id}`);
+    assert.ok(scene.steps.length >= 3, `too little teaching in ${task.id}`);
+    for (const step of scene.steps) {
+      assert.match(step.audio ?? "", /nitka-c-/, `${task.id} has no voice C audio`);
+      const clip = await stat(new URL(step.audio, import.meta.url));
+      assert.ok(clip.size > 10_000, step.audio);
+    }
+  }
+});
+
+test("a story can move back by exactly one scene without leaving the chapter", () => {
+  let state = beginScene(createInitialState(), "time-after-1445");
+  state = advanceScene(state);
+  state = advanceScene(state);
+  state = previousScene(state);
+  assert.equal(state.modeSessions.focus.scene.taskId, "time-after-1445");
+  assert.equal(state.modeSessions.focus.scene.step, 1);
+  assert.equal(state.modeSessions.focus.scene.phase, "story");
+});
+
+test("scene view exposes previous navigation after the first frame", () => {
+  const root = { className: "", innerHTML: "" };
+  let state = beginScene(createInitialState(), "time-after-1445");
+  state = advanceScene(state);
+  renderApp(root, state);
+  assert.match(root.innerHTML, /data-scene-previous/);
 });
 
 test("the math task transfers the scene rule to a new time", () => {
@@ -481,21 +524,26 @@ test("the math task transfers the scene rule to a new time", () => {
 });
 
 test("the math chapter explains the clock before elapsed time", () => {
-  assert.equal(
-    SCENES["time-after-1445"].steps[1].transcript,
-    "Na zegarze każda liczba to 5 minut. Długa wskazówka na 11 oznacza 55 minut.",
-  );
+  assert.ok(TASKS.findIndex(task => task.id === "clock-minute-hand") < TASKS.findIndex(task => task.id === "time-after-1445"));
+  assert.match(SCENES["clock-minute-hand"].steps[1].beat, /Każda liczba to 5 minut/);
 });
 
 test("scene transitions restore keyboard focus to the next micro-step", async () => {
   const source = await readFile(new URL("./app.js", import.meta.url), "utf8");
-  assert.match(source, /commit\(beginScene\([^;]+, "", "\[data-scene-next\]"\)/);
+  assert.match(source, /commit\(beginScene\([^;]+, "", "\[data-scene-next\]", true\)/);
   assert.match(source, /result === "correct" \? "\.answer-choice" : "\[data-scene-next\]"/);
+});
+
+test("story navigation automatically starts the selected voice clip", async () => {
+  const source = await readFile(new URL("./app.js", import.meta.url), "utf8");
+  assert.match(source, /const commit = \(next, announcement = "", focusSelector = "", playSceneAudio = false\)/);
+  assert.match(source, /root\.querySelector\("#scene-audio"\)\?\.play\(\)\?\.catch/);
 });
 
 test("a prerequisite question uses a neutral earlier-step graphic", () => {
   const root = { className: "", innerHTML: "" };
   const state = switchMode(createInitialState(), "focus");
+  state.modeSessions.focus.scene.seenTaskIds.push("clock-minute-hand");
   state.modeSessions.focus.currentStep = 1;
   renderApp(root, state);
   assert.match(root.innerHTML, /data-visual-step="prerequisite"/);

@@ -1,3 +1,5 @@
+import { EXPANDED_SCENES } from "./lessons.js";
+
 export const ACTIONS = Object.freeze({
   ADVANCE: "ADVANCE",
   REPEAT_DIFFERENTLY: "REPEAT_DIFFERENTLY",
@@ -242,7 +244,7 @@ export const TASKS = [
   },
 ];
 
-export const SCENES = Object.freeze({
+const BASE_SCENES = Object.freeze({
   "time-after-1445": {
     id: "nitka-math-time",
     taskId: "time-after-1445",
@@ -322,10 +324,10 @@ export const SCENES = Object.freeze({
   },
 });
 
+export const SCENES = Object.freeze({ ...BASE_SCENES, ...EXPANDED_SCENES });
+
 export function getSceneForTask(taskId) {
-  if (SCENES[taskId]) return SCENES[taskId];
-  const subject = TASKS.find(task => task.id === taskId)?.subject;
-  return Object.values(SCENES).find(scene => scene.subject === subject) ?? null;
+  return SCENES[taskId] ?? null;
 }
 
 const PRESENTATIONS = {
@@ -541,7 +543,7 @@ export function getTaskById(id) {
 export function shouldOfferScene(state, task) {
   const scene = state.modeSessions[state.activeMode].scene;
   const lesson = getSceneForTask(task?.id);
-  return state.activeMode === "explore"
+  return state.activeMode !== "review"
     && Boolean(lesson)
     && !scene.seenTaskIds.includes(lesson.taskId);
 }
@@ -577,6 +579,15 @@ export function advanceScene(state) {
   return next;
 }
 
+export function previousScene(state) {
+  const next = structuredClone(state);
+  const sceneState = next.modeSessions[next.activeMode].scene;
+  if (!SCENES[sceneState.taskId] || sceneState.phase !== "story" || sceneState.step < 1) return state;
+  sceneState.step -= 1;
+  sceneState.feedback = "";
+  return next;
+}
+
 function finishScene(next, taskId) {
   const sceneState = next.modeSessions[next.activeMode].scene;
   if (!sceneState.seenTaskIds.includes(taskId)) sceneState.seenTaskIds.push(taskId);
@@ -608,7 +619,13 @@ export function answerScene(state, value) {
     else {
       finishScene(next, scene.taskId);
       next.modeSessions[next.activeMode].lastFeedback = "Rozdział skończony. To, co było trudne, wróci później w krótkiej powtórce.";
-      next.screen = "end";
+      const lessonTasks = next.activeSubject === "all" ? TASKS : TASKS.filter(task => task.subject === scene.subject);
+      const nextTask = lessonTasks[lessonTasks.findIndex(task => task.id === scene.taskId) + 1];
+      if (nextTask) {
+        next.modeSessions[next.activeMode].currentTaskId = nextTask.id;
+        next.modeSessions[next.activeMode].taskBySubject[next.activeSubject] = nextTask.id;
+        next.screen = "learn";
+      } else next.screen = "end";
     }
   } else {
     sceneState.phase = "story";
@@ -856,7 +873,7 @@ function homeView(state) {
     <p class="intro">Wybierz tryb. ${known ? `Masz rozpoczęte ${known} obszary.` : "Zaczniemy spokojnie."}</p>
     <div class="nitka-home">
       <img src="./images/kroliczka-nitka.png" alt="Króliczka Nitka, projektantka mody i prowadząca misje">
-      <div><p class="eyebrow">Nowe obrazkowe rozdziały</p><h2>Króliczka Nitka ma plan</h2><p>Najpierw obrazkowa opowieść pełna wiedzy. Test pojawi się dopiero na końcu.</p></div>
+      <div><p class="eyebrow">17 rozdziałów · 71 scen z głosem Nitki</p><h2>Króliczka Nitka ma plan</h2><p>Najpierw dużo wiedzy w krótkich opowieściach. Test pojawi się dopiero na końcu każdego rozdziału.</p></div>
     </div>
     <div class="mode-grid">
       ${Object.entries(MODES).map(([id, mode]) => `<button class="mode-card" data-mode="${id}">
@@ -921,7 +938,7 @@ function sceneView(state) {
     <h1 id="scene-title">${escapeHtml(scene.title)}</h1>
     <p class="scene-transcript">${escapeHtml(step.transcript)}</p>
     ${audio}
-    <div class="scene-actions">${replay}<button class="quiet-button" type="button" data-scene-skip>Pomiń rozdział</button><button class="primary-button" type="button" data-scene-next>${nextLabel}</button></div>
+    <div class="scene-actions">${sceneState.step > 0 ? '<button class="quiet-button" type="button" data-scene-previous>← Poprzednia scenka</button>' : ""}${replay}<button class="quiet-button" type="button" data-scene-skip>Pomiń rozdział</button><button class="primary-button" type="button" data-scene-next>${nextLabel}</button></div>
   </section>`;
 }
 
@@ -1019,13 +1036,14 @@ if (typeof document !== "undefined") {
   const announcer = document.querySelector("#announcer");
   let state = loadState(localStorage);
 
-  const commit = (next, announcement = "", focusSelector = "") => {
+  const commit = (next, announcement = "", focusSelector = "", playSceneAudio = false) => {
     state = next;
     saveState(localStorage, state);
     renderApp(root, state);
     announcer.textContent = announcement;
     bindEvents();
     if (focusSelector) root.querySelector(focusSelector)?.focus();
+    if (playSceneAudio) root.querySelector("#scene-audio")?.play()?.catch(() => {});
   };
 
   const bindEvents = () => {
@@ -1035,8 +1053,9 @@ if (typeof document !== "undefined") {
       commit({ ...state, screen: button.dataset.screen }, "", focusSelector);
     }));
     root.querySelectorAll("[data-subject-filter]").forEach(button => button.addEventListener("click", () => commit(switchSubject(state, button.dataset.subjectFilter), "", `[data-subject-filter="${button.dataset.subjectFilter}"]`)));
-    root.querySelector("[data-scene-start]")?.addEventListener("click", event => commit(beginScene(state, event.currentTarget.dataset.sceneStart), "", "[data-scene-next]"));
-    root.querySelector("[data-scene-next]")?.addEventListener("click", () => commit(advanceScene(state), "", "[data-scene-next]"));
+    root.querySelector("[data-scene-start]")?.addEventListener("click", event => commit(beginScene(state, event.currentTarget.dataset.sceneStart), "", "[data-scene-next]", true));
+    root.querySelector("[data-scene-next]")?.addEventListener("click", () => commit(advanceScene(state), "", "[data-scene-next]", true));
+    root.querySelector("[data-scene-previous]")?.addEventListener("click", () => commit(previousScene(state), "", "[data-scene-next]", true));
     root.querySelector("[data-scene-skip]")?.addEventListener("click", () => commit(skipScene(state), "Scenka pominięta.", ".answer-choice"));
     root.querySelector("[data-scene-replay]")?.addEventListener("click", () => {
       const audio = root.querySelector("#scene-audio");
@@ -1051,6 +1070,7 @@ if (typeof document !== "undefined") {
         next,
         result === "correct" ? "Dobrze. Teraz sprawdzimy tę wiedzę w nowej sytuacji." : "Wróćmy do jednego potrzebnego kadru.",
         result === "correct" ? ".answer-choice" : "[data-scene-next]",
+        result !== "correct",
       );
     });
     root.querySelector("#answer-form")?.addEventListener("submit", event => {
