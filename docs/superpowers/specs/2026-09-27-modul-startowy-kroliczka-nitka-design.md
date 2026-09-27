@@ -50,7 +50,7 @@ Atom wiedzy: rozpoznanie organizmu na podstawie czynności życiowych, a nie wyg
 
 Nitka kompletuje strój i wybiera pomarańczowy szalik. Polska kwestia ustanawia sytuację, po czym Nitka wyraźnie mówi: „an orange scarf”. Po scence aplikacja pyta wyłącznie o poprawną wersję wyrażenia.
 
-Atom wiedzy: użycie `an` przed wyrazem zaczynającym się samogłoską oraz szyk przymiotnik + rzeczownik.
+Atom wiedzy: użycie `an` przed wyrazem zaczynającym się samogłoską. Szyk przymiotnik + rzeczownik jest w tej scence tylko kontekstem i nie jest oceniany.
 
 ## Forma scenki
 
