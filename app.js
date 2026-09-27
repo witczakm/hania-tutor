@@ -125,7 +125,7 @@ export const TASKS = [
     subject: "nature",
     topic: "anthropogenic",
     prompt: "Czy asfaltowa droga jest elementem naturalnym czy antropogenicznym?",
-    answers: ["antropogenicznym", "antropogeniczny"],
+    answers: ["antropogenicznym", "antropogeniczny", "antropogeniczna"],
     hint: "Zastanów się, czy powstała bez działania człowieka.",
     prerequisitePrompt: "Czy asfaltową drogę zbudował człowiek?",
     prerequisiteAnswers: ["tak"],
@@ -242,6 +242,30 @@ export const TASKS = [
   },
 ];
 
+const PRESENTATIONS = {
+  "clock-minute-hand": { prompt: "Ile minut pokazuje długa wskazówka?", visualLabel: "Zegar z długą wskazówką na jedenastce", choices: ["50", "55", "60"], prerequisiteChoices: ["5", "10", "15"] },
+  "time-after-1445": { prompt: "Jest 14:45. Która godzina będzie za 30 minut?", visualLabel: "Oś czasu od 14:45 o trzydzieści minut do przodu", choices: ["15:05", "15:15", "15:45"], prerequisiteChoices: ["5", "15", "45"] },
+  "calendar-next-saturday": { prompt: "Poniedziałek to 8 maja. Kiedy będzie sobota?", visualLabel: "Kartka kalendarza z poniedziałkiem ósmego maja", choices: ["10 maja", "13 maja", "15 maja"], prerequisiteChoices: ["wtorek", "środa", "sobota"] },
+  "roman-nine": { prompt: "Jaką liczbę oznacza IX?", visualLabel: "Rzymski zapis IX", choices: ["6", "9", "11"], prerequisiteChoices: ["5", "10", "50"] },
+  "length-room-unit": { prompt: "Pokój ma długość 315. Która jednostka pasuje?", visualLabel: "Miarka z długością pokoju trzysta piętnaście", choices: ["cm", "m", "km"], prerequisiteChoices: ["10", "100", "1000"] },
+  "living-mushroom": { prompt: "Czy grzyb należy do przyrody ożywionej?", visualLabel: "Grzyb rosnący z ziemi", choices: ["tak", "nie"], prerequisiteChoices: ["tak", "nie"] },
+  "organisms-cells": { prompt: "Z czego są zbudowane organizmy?", visualLabel: "Kilka komórek widzianych w powiększeniu", choices: ["z komórek", "z kamieni", "z plastiku"], prerequisiteChoices: ["tak", "nie"] },
+  "life-process-growing": { prompt: "Dziecko staje się wyższe. Co to pokazuje?", visualLabel: "Trzy etapy wzrostu tej samej rośliny", choices: ["wzrost", "oddychanie", "ruch"], prerequisiteChoices: ["tak", "nie"] },
+  "anthropogenic-road": { prompt: "Jaka jest asfaltowa droga?", visualLabel: "Asfaltowa droga zbudowana przez ludzi", choices: ["naturalna", "antropogeniczna"], prerequisiteChoices: ["tak", "nie"] },
+  "stimulus-light": { prompt: "Latarka świeci w oczy. Co jest bodźcem?", visualLabel: "Latarka wysyłająca światło w stronę oka", choices: ["światło", "oko", "latarka"], prerequisiteChoices: ["tak", "nie"] },
+  "senses-sound": { prompt: "Co odbiera dźwięki?", visualLabel: "Ucho odbierające fale dźwiękowe", choices: ["ucho", "oko", "nos"], prerequisiteChoices: ["słuch", "wzrok", "węch"] },
+  "english-thirteen": { prompt: "Która liczba to thirteen?", visualLabel: "Liczba trzynaście i trzynaście kropek", choices: ["12", "13", "30"], prerequisiteChoices: ["5", "10", "20"] },
+  "english-pencil-case": { prompt: "Który napis oznacza piórnik?", visualLabel: "Piórnik z dwoma ołówkami", choices: ["pencil case", "book", "desk"], prerequisiteChoices: ["pencil", "pen", "book"] },
+  "english-they": { prompt: "Anna i Ola. She czy they?", visualLabel: "Dwie osoby stojące obok siebie", choices: ["she", "they"], prerequisiteChoices: ["she", "he", "they"] },
+  "english-he-is": { prompt: "He ___ ten. Co pasuje?", visualLabel: "Zdanie He, puste miejsce, ten", choices: ["am", "is", "are"], prerequisiteChoices: ["am", "is", "are"] },
+  "english-an-apple": { prompt: "___ apple. Co pasuje?", visualLabel: "Jabłko obok pustego miejsca na a lub an", choices: ["a", "an"], prerequisiteChoices: ["a", "e", "p"] },
+  "english-brown-desk": { prompt: "Który napis oznacza brązowe biurko?", visualLabel: "Brązowe biurko", choices: ["brown desk", "desk brown"], prerequisiteChoices: ["biurko", "krzesło", "książka"] },
+};
+
+export function getTaskPresentation(task) {
+  return PRESENTATIONS[task.id];
+}
+
 export const STORAGE_KEY = "hania-tutor-state-v1";
 
 export function normalizeAnswer(value = "") {
@@ -250,6 +274,7 @@ export function normalizeAnswer(value = "") {
     .toLocaleLowerCase("pl-PL")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ł/g, "l")
     .replace(/[.!?,]/g, "")
     .replace(/\s+/g, " ");
 }
@@ -262,21 +287,17 @@ export function evaluateAnswer(task, value) {
 }
 
 const MODES = {
-  focus: { name: "Spokojny stolik", short: "Stolik", description: "Znajdujemy najmniejszą lukę i ćwiczymy tylko ją." },
-  explore: { name: "Ścieżka odkrywcy", short: "Odkrywaj", description: "Poznajemy nową rzecz małymi, pewnymi krokami." },
-  review: { name: "Szybka powtórka", short: "Powtórka", description: "Wracamy tylko do tego, co właśnie warto przypomnieć." },
+  focus: { name: "Spokojny stolik", short: "Stolik", description: "Ćwicz trudny krok." },
+  explore: { name: "Ścieżka odkrywcy", short: "Odkrywaj", description: "Poznaj coś nowego." },
+  review: { name: "Szybka powtórka", short: "Powtórka", description: "Przypomnij to, co ważne." },
 };
 
 const SUBJECTS = { math: "Matematyka", nature: "Przyroda", english: "Angielski" };
-const VISUALS = {
-  clock: "◷", calendar: "▦", roman: "IX", ruler: "↔", nature: "♧", cells: "◌",
-  growth: "↗", road: "⌁", light: "☀", ear: "◖", number: "13", "pencil-case": "✎",
-  people: "••", sentence: "Aa", apple: "●", desk: "▰",
-};
 
 function createSession(currentTaskId = TASKS[0].id) {
   return {
     currentTaskId,
+    taskBySubject: {},
     currentStep: 0,
     diagnosticCount: 0,
     helpLevel: 0,
@@ -292,6 +313,7 @@ export function createInitialState() {
   return {
     version: 1,
     activeMode: "focus",
+    activeSubject: "all",
     screen: "home",
     knowledge: {},
     modeSessions: {
@@ -314,6 +336,19 @@ export function switchMode(state, activeMode) {
   return next;
 }
 
+export function switchSubject(state, activeSubject) {
+  if (!["all", ...Object.keys(SUBJECTS)].includes(activeSubject)) return state;
+  const next = structuredClone(state);
+  const session = next.modeSessions[next.activeMode];
+  session.taskBySubject ??= {};
+  session.taskBySubject[next.activeSubject] = session.currentTaskId;
+  next.activeSubject = activeSubject;
+  session.currentTaskId = session.taskBySubject[activeSubject]
+    ?? TASKS.find(task => activeSubject === "all" || task.subject === activeSubject)?.id
+    ?? TASKS[0].id;
+  return next;
+}
+
 export function saveState(storage, state) {
   storage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
@@ -322,6 +357,7 @@ export function loadState(storage) {
   try {
     const value = JSON.parse(storage.getItem(STORAGE_KEY));
     if (value?.version !== 1 || !value.knowledge || !value.modeSessions || !MODES[value.activeMode]
+      || !["all", ...Object.keys(SUBJECTS)].includes(value.activeSubject ?? "all")
       || !["focus", "explore", "review"].every(mode => value.modeSessions[mode]?.currentTaskId)) {
       return createInitialState();
     }
@@ -330,6 +366,7 @@ export function loadState(storage) {
       ...initial,
       ...value,
       screen: value.screen ?? "home",
+      activeSubject: value.activeSubject ?? "all",
       modeSessions: Object.fromEntries(Object.keys(initial.modeSessions).map(mode => [
         mode,
         { ...initial.modeSessions[mode], ...value.modeSessions[mode] },
@@ -341,19 +378,20 @@ export function loadState(storage) {
 }
 
 export function selectNextTask(state, modeId = state.activeMode) {
+  const matchesSubject = task => state.activeSubject === "all" || task.subject === state.activeSubject;
   if (modeId === "review") {
     if (state.modeSessions.review.completedCount >= 5) return null;
     const dueAtom = Object.entries(state.knowledge)
       .find(([, knowledge]) => knowledge.status !== "UNSEEN" && knowledge.nextReviewAt <= Date.now())?.[0];
-    return TASKS.find(task => task.atomId === dueAtom) ?? null;
+    return TASKS.find(task => task.atomId === dueAtom && matchesSubject(task))
+      ?? TASKS.find(task => matchesSubject(task) && state.knowledge[task.atomId]?.status !== "UNSEEN" && state.knowledge[task.atomId]?.nextReviewAt <= Date.now())
+      ?? null;
   }
 
   if (modeId === "explore") {
-    const subject = state.modeSessions.explore.subject;
-    if (!subject) return null;
     const isReady = task => !task.prerequisiteAtomId
       || ["INDEPENDENT", "TRANSFERRED", "RETAINED"].includes(state.knowledge[task.prerequisiteAtomId]?.status);
-    const tasks = TASKS.filter(task => task.subject === subject && isReady(task));
+    const tasks = TASKS.filter(task => matchesSubject(task) && isReady(task));
     return tasks.find(task => !state.knowledge[task.atomId])
       ?? tasks.find(task => state.knowledge[task.atomId]?.status !== "RETAINED")
       ?? tasks[0]
@@ -361,7 +399,10 @@ export function selectNextTask(state, modeId = state.activeMode) {
   }
 
   const session = state.modeSessions[modeId];
-  return TASKS.find(task => task.id === session?.currentTaskId) ?? TASKS[0];
+  const cursor = session?.taskBySubject?.[state.activeSubject] ?? session?.currentTaskId;
+  return TASKS.find(task => task.id === cursor && matchesSubject(task))
+    ?? TASKS.find(matchesSubject)
+    ?? TASKS[0];
 }
 
 export function getTaskById(id) {
@@ -442,9 +483,12 @@ export function applyAnswer(state, value) {
     const currentIndex = TASKS.indexOf(task);
     const candidates = [...TASKS.slice(currentIndex + 1), ...TASKS.slice(0, currentIndex + 1)];
     const nextTask = next.activeMode === "focus"
-      ? candidates.find(item => next.knowledge[item.atomId]?.status !== "RETAINED")
+      ? candidates.find(item => (next.activeSubject === "all" || item.subject === next.activeSubject) && next.knowledge[item.atomId]?.status !== "RETAINED")
       : selectNextTask(next, next.activeMode);
-    if (nextTask) session.currentTaskId = nextTask.id;
+    if (nextTask) {
+      session.currentTaskId = nextTask.id;
+      session.taskBySubject[next.activeSubject] = nextTask.id;
+    }
   } else if (result === "incorrect") {
     session.consecutiveErrors += 1;
     session.correctStreak = 0;
@@ -469,8 +513,11 @@ export function applyAnswer(state, value) {
     : action === ACTIONS.END_SESSION
       ? "Pięć krótkich powtórek wystarczy. Na dziś ta seria jest skończona."
       : getActionContent(action, task);
+  session.lastResult = result;
   if (next.activeMode === "review" && action === ACTIONS.END_SESSION && result !== "correct") {
     next.modeSessions.focus = { ...createSession(task.id), lastFeedback: "Wróćmy spokojnie do punktu, który sprawił trudność." };
+    next.modeSessions.focus.taskBySubject[task.subject] = task.id;
+    next.modeSessions.focus.taskBySubject.all = task.id;
   }
   if (action === ACTIONS.TAKE_BREAK) next.screen = "break";
   if (action === ACTIONS.END_SESSION) next.screen = "end";
@@ -488,11 +535,37 @@ export function applyAnswer(state, value) {
 
 function currentPrompt(task, session) {
   if (session.currentStep === 1) return task.prerequisitePrompt;
-  return task.prompt;
+  return getTaskPresentation(task).prompt;
 }
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"]/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[character]);
+}
+
+function visualMarkup(task) {
+  const presentation = getTaskPresentation(task);
+  const open = `<div class="learning-visual visual-${task.visual}" data-learning-visual role="img" aria-label="${escapeHtml(presentation.visualLabel)}"><svg viewBox="0 0 320 180" aria-hidden="true" focusable="false">`;
+  const close = "</svg></div>";
+  const visuals = {
+    "clock-minute-hand": `<circle class="visual-paper" cx="160" cy="90" r="67"/><circle cx="160" cy="90" r="61"/><path d="M160 34v10M216 90h-10M160 146v-10M104 90h10"/><path class="clock-hour" d="M160 90l30 20"/><path class="clock-minute" d="M160 90l-31-48"/><circle class="visual-fill" cx="160" cy="90" r="6"/>`,
+    "time-after-1445": `<path d="M38 96h244"/><circle cx="48" cy="96" r="8"/><circle cx="160" cy="96" r="8"/><circle cx="272" cy="96" r="8"/><circle class="travel-dot" cx="48" cy="96" r="13"/><text x="48" y="135">14:45</text><text x="160" y="135">15:00</text><text x="272" y="135">?</text><text class="visual-small" x="160" y="55">+ 30 min</text>`,
+    "calendar-next-saturday": `<rect class="visual-paper" x="75" y="25" width="170" height="135" rx="14"/><path d="M75 62h170M110 25v24M210 25v24"/><text x="160" y="52">MAJ</text><text x="112" y="105">8</text><path class="calendar-path" d="M132 99h64"/><text x="216" y="105">?</text><text class="visual-small" x="110" y="136">PON</text><text class="visual-small" x="216" y="136">SOB</text>`,
+    "roman-nine": `<rect class="visual-paper" x="82" y="25" width="156" height="130" rx="18"/><text class="visual-hero" x="160" y="118">IX</text>`,
+    "length-room-unit": `<path d="M45 120h230M52 120V82M86 120V96M120 120V82M154 120V96M188 120V82M222 120V96M268 120V82"/><path class="measure-line" d="M52 58h216M52 58l15-10M52 58l15 10M268 58l-15-10M268 58l-15 10"/><text x="160" y="44">315 ?</text>`,
+    "living-mushroom": `<path class="visual-fill-soft" d="M77 92c9-42 41-65 83-65s74 23 83 65c-55 17-111 17-166 0Z"/><path class="visual-paper" d="M142 87h36l19 68h-74l19-68Z"/><path d="M95 91h130M134 155h52"/>`,
+    "organisms-cells": `<circle class="visual-paper" cx="112" cy="91" r="48"/><circle class="visual-paper" cx="198" cy="75" r="38"/><circle class="visual-paper" cx="200" cy="130" r="31"/><circle class="visual-fill" cx="111" cy="92" r="13"/><circle class="visual-fill" cx="198" cy="75" r="10"/><circle class="visual-fill" cx="200" cy="130" r="8"/>`,
+    "life-process-growing": `<path d="M65 145V118M160 145V86M255 145V48"/><path class="growth-one" d="M65 121c-19-3-25-15-25-26 16 0 25 9 25 26Zm0 0c19-3 25-15 25-26-16 0-25 9-25 26Z"/><path class="growth-two" d="M160 103c-27-4-35-21-35-36 22 0 35 13 35 36Zm0 0c27-4 35-21 35-36-22 0-35 13-35 36Z"/><path class="growth-three" d="M255 77c-34-5-44-27-44-47 28 0 44 17 44 47Zm0 0c34-5 44-27 44-47-28 0-44 17-44 47Z"/><path d="M35 145h250"/>`,
+    "anthropogenic-road": `<path class="visual-fill-soft" d="M111 160 146 20h28l35 140Z"/><path d="M160 32v25M160 75v25M160 118v25"/><path d="M30 160h260"/><rect class="visual-paper" x="222" y="78" width="48" height="47"/><path d="m216 78 30-24 30 24"/>`,
+    "stimulus-light": `<path class="visual-paper" d="M42 83h68v34H42zM110 89l35-18v58l-35-18z"/><path class="signal-line" d="M150 83l73-22M150 100h73M150 117l73 22"/><path d="M228 100c20-31 45-31 65 0-20 31-45 31-65 0Z"/><circle class="visual-fill" cx="260" cy="100" r="10"/>`,
+    "senses-sound": `<path class="sound-wave wave-one" d="M53 70c20 12 20 28 0 40"/><path class="sound-wave wave-two" d="M82 53c37 23 37 71 0 94"/><path class="visual-paper" d="M190 35c-45 0-63 34-54 67 7 25 28 25 30 46h28c0-31-23-31-20-49 2-13 18-14 25-5 10-8 18-20 18-34 0-15-10-25-27-25Z"/><path d="M173 71c18-16 39 6 24 24-7 8-17 10-18 26"/>`,
+    "english-thirteen": `<text class="visual-hero" x="160" y="102">13</text>${Array.from({ length: 13 }, (_, index) => `<circle class="count-dot" cx="${77 + (index % 7) * 28}" cy="${132 + Math.floor(index / 7) * 25}" r="5"/>`).join("")}`,
+    "english-pencil-case": `<rect class="visual-fill-soft" x="63" y="65" width="194" height="78" rx="28"/><path d="M81 65h158M196 42l-66 76M220 48l-61 70"/><path class="visual-fill" d="m196 42 7 20 12-15-19-5ZM220 48l5 20 13-14-18-6Z"/>`,
+    "english-they": `<circle class="visual-paper" cx="115" cy="61" r="25"/><circle class="visual-paper" cx="205" cy="61" r="25"/><path class="visual-fill-soft" d="M72 151c3-45 18-66 43-66s40 21 43 66ZM162 151c3-45 18-66 43-66s40 21 43 66Z"/>`,
+    "english-he-is": `<text class="visual-word" x="76" y="105">HE</text><rect class="visual-paper" x="123" y="63" width="76" height="55" rx="12"/><text class="visual-word" x="250" y="105">TEN</text>`,
+    "english-an-apple": `<rect class="visual-paper" x="44" y="63" width="92" height="55" rx="12"/><path class="visual-fill-soft" d="M216 64c-39-22-65 13-53 49 12 37 53 50 76 8 26-48 1-76-23-57Z"/><path d="M216 66c-4-17 2-27 14-34M220 48c13-10 25-7 34-2"/>`,
+    "english-brown-desk": `<path class="desk-top" d="M54 70h212v42H54z"/><path d="M77 112v49M243 112v49M130 112v25h60v-25"/>`,
+  };
+  return `${open}${visuals[task.id] ?? visuals["roman-nine"]}${close}`;
 }
 
 function header() {
@@ -505,15 +578,23 @@ function header() {
   </header>`;
 }
 
+function modeIcon(id) {
+  const paths = {
+    focus: '<circle cx="24" cy="24" r="16"/><circle cx="24" cy="24" r="7"/><path d="m32 16 8-8"/>',
+    explore: '<circle cx="10" cy="35" r="4"/><circle cx="24" cy="24" r="4"/><circle cx="39" cy="10" r="4"/><path d="m13 32 8-6m6-5 9-8"/>',
+    review: '<path d="M39 17A17 17 0 1 0 41 31M39 17V7m0 10H29"/><path d="M17 25h14"/>',
+  };
+  return `<svg class="mode-symbol" viewBox="0 0 48 48" aria-hidden="true">${paths[id]}</svg>`;
+}
+
 function homeView(state) {
   const known = Object.keys(state.knowledge).length;
   return `<section aria-labelledby="welcome-title">
-    <p class="eyebrow">Jedno pytanie. Jeden krok.</p>
-    <h1 id="welcome-title">Czego dziś potrzebujesz?</h1>
-    <p class="intro">Każdy tryb korzysta z tych samych postępów. Możesz się przełączać i zawsze wrócisz dokładnie tam, gdzie skończyłaś. ${known ? `Rozpoczęte obszary: ${known}.` : "Zaczniemy spokojnie."}</p>
+    <h1 id="welcome-title">Co robimy?</h1>
+    <p class="intro">Wybierz tryb. ${known ? `Masz rozpoczęte ${known} obszary.` : "Zaczniemy spokojnie."}</p>
     <div class="mode-grid">
-      ${Object.entries(MODES).map(([id, mode], index) => `<button class="mode-card" data-mode="${id}">
-        <span class="mode-number">0${index + 1}</span><h2>${mode.name}</h2><p>${mode.description}</p><span class="mode-arrow" aria-hidden="true">→</span>
+      ${Object.entries(MODES).map(([id, mode]) => `<button class="mode-card" data-mode="${id}">
+        ${modeIcon(id)}<h2>${mode.name}</h2><p>${mode.description}</p><span class="mode-arrow" aria-hidden="true">→</span>
       </button>`).join("")}
     </div>
   </section>`;
@@ -524,10 +605,10 @@ function modeNav(activeMode) {
     `<button class="mode-pill" data-mode="${id}" aria-current="${id === activeMode}">${mode.short}</button>`).join("")}</nav>`;
 }
 
-function explorerSubjectView(state) {
-  return `${modeNav(state.activeMode)}<section class="question-card"><p class="eyebrow">Ścieżka odkrywcy</p><h1>Wybierz dziedzinę</h1><p class="intro">Pokażę tylko taki nowy krok, do którego masz już potrzebne podstawy.</p><div class="subject-grid">
-    ${Object.entries(SUBJECTS).map(([id, label]) => `<button class="subject-button" data-subject="${id}">${label}<span aria-hidden="true">→</span></button>`).join("")}
-  </div></section>`;
+function subjectSwitcher(activeSubject) {
+  const subjects = { all: "Wszystko", ...SUBJECTS };
+  return `<nav class="subject-switcher" aria-label="Wybierz przedmiot">${Object.entries(subjects).map(([id, label]) =>
+    `<button type="button" data-subject-filter="${id}" aria-pressed="${id === activeSubject}">${label}</button>`).join("")}</nav>`;
 }
 
 function explorerMap(state, subject) {
@@ -539,21 +620,22 @@ function explorerMap(state, subject) {
 }
 
 function learningView(state) {
-  if (state.activeMode === "explore" && !state.modeSessions.explore.subject) return explorerSubjectView(state);
   const task = selectNextTask(state);
-  if (!task) return `${modeNav(state.activeMode)}<section class="question-card empty-state"><div class="visual-cue" aria-hidden="true">✓</div><h1>Na teraz wszystko powtórzone</h1><p class="intro">Wróć później. Aplikacja zachowa postępy i wybierze odpowiedni moment na kolejną powtórkę.</p><button class="primary-button" data-screen="home">Wybierz inny tryb</button></section>`;
+  if (!task) return `${modeNav(state.activeMode)}<div>${subjectSwitcher(state.activeSubject)}<section class="question-card empty-state"><div class="visual-cue" aria-hidden="true">✓</div><h1>Na teraz wszystko powtórzone</h1><p class="intro">Wróć później.</p><button class="primary-button" data-screen="home">Wybierz inny tryb</button></section></div>`;
   const session = state.modeSessions[state.activeMode];
+  const presentation = getTaskPresentation(task);
+  const prompt = currentPrompt(task, session);
+  const choices = session.currentStep === 1 ? presentation.prerequisiteChoices : presentation.choices;
   const feedback = session.lastFeedback ? `<p class="feedback">${escapeHtml(session.lastFeedback)}</p>` : "";
   const modeDetail = state.activeMode === "review" ? `pozostało: ${5 - session.completedCount}` : MODES[state.activeMode].name;
-  const map = state.activeMode === "explore" ? explorerMap(state, session.subject) : "";
-  return `${modeNav(state.activeMode)}<div>${map}<section class="question-card" aria-labelledby="question-title">
+  const resultClass = session.lastResult ? ` result-${session.lastResult}` : "";
+  return `${modeNav(state.activeMode)}<div>${subjectSwitcher(state.activeSubject)}${state.activeMode === "explore" ? explorerMap(state, task.subject) : ""}<section class="question-card${resultClass}" aria-labelledby="question-title">
     <div class="progress-line"><span class="subject-tag">${SUBJECTS[task.subject]}</span><span>${modeDetail}</span></div>
-    <div class="visual-cue" aria-hidden="true">${VISUALS[task.visual] ?? "•"}</div>
-    ${feedback}<h1 id="question-title">${escapeHtml(currentPrompt(task, session))}</h1>
-    <form class="answer-form" id="answer-form">
-      <label for="answer">Twoja odpowiedź</label>
-      <div class="answer-row"><input id="answer" name="answer" autocomplete="off" inputmode="text"><button class="primary-button" type="submit">Sprawdź</button></div>
-      <span class="answer-note">Możesz też wpisać „nie wiem”.</span>
+    ${visualMarkup(task)}
+    ${feedback}<div class="question-heading"><h1 id="question-title">${escapeHtml(prompt)}</h1><button class="listen-button" type="button" id="listen-question" data-speech="${escapeHtml(prompt)}" aria-label="Posłuchaj pytania"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9v6h4l5 4V5L9 9H5Zm12 1c1.3 1.3 1.3 2.7 0 4m2.5-6.5c3 3 3 6 0 9"/></svg><span>Posłuchaj</span></button></div>
+    <form class="answer-form" id="answer-form" aria-labelledby="question-title">
+      <div class="choice-grid">${choices.map(choice => `<button class="answer-choice" type="submit" name="answer" value="${escapeHtml(choice)}">${escapeHtml(choice)}</button>`).join("")}</div>
+      <button class="unsure-button" type="submit" name="answer" value="nie wiem">Nie wiem</button>
     </form>
     <div class="session-actions"><button class="quiet-button" id="take-break">Potrzebuję przerwy</button></div>
   </section></div>`;
@@ -564,7 +646,7 @@ function progressView(state) {
   const independent = entries.filter(item => ["INDEPENDENT", "TRANSFERRED", "RETAINED"].includes(item.knowledge.status)).length;
   const supported = entries.filter(item => item.knowledge.status === "SUPPORTED").length;
   const due = entries.filter(item => item.knowledge.nextReviewAt <= Date.now()).length;
-  return `<section class="panel" aria-labelledby="progress-title"><p class="eyebrow">Wspólna baza wiedzy</p><h1 id="progress-title">Moje postępy</h1>
+  return `<section class="panel" aria-labelledby="progress-title"><h1 id="progress-title">Moje postępy</h1>
     <p class="intro">To, czego nauczysz się w jednym trybie, jest od razu dostępne w pozostałych.</p>
     <div class="progress-grid"><div class="stat"><strong>${independent}</strong><span>umiem samodzielnie</span></div><div class="stat"><strong>${supported}</strong><span>umiem z pomocą</span></div><div class="stat"><strong>${due}</strong><span>do powtórki</span></div></div>
     <div class="knowledge-list">${entries.length ? entries.map(({ task, knowledge }) => `<div class="knowledge-row"><span>${SUBJECTS[task.subject]} · ${escapeHtml(task.prompt.replace("?", ""))}<small>Pomoc: ${knowledge.helpUsed ?? 0} · powtórka: ${knowledge.nextReviewAt ? new Date(knowledge.nextReviewAt).toLocaleDateString("pl-PL") : "jeszcze nie"}</small></span><span class="status">${knowledge.status === "SUPPORTED" ? "z pomocą" : knowledge.status === "RETAINED" ? "utrwalone" : knowledge.status === "TRANSFERRED" ? "użyte w nowej sytuacji" : "samodzielnie"}</span></div>`).join("") : "<p>Jeszcze nic tu nie ma. Pierwsza odpowiedź rozpocznie profil wiedzy.</p>"}</div>
@@ -577,12 +659,12 @@ function progressView(state) {
 }
 
 function breakView() {
-  return `<section class="panel empty-state"><div class="visual-cue" aria-hidden="true">≈</div><p class="eyebrow">Krótka przerwa</p><h1>Głowa może odpocząć</h1><p class="intro">Trzy trudne próby to wystarczająco dużo. Gdy będziesz gotowa, wrócimy do jednego prostego kroku.</p><button class="primary-button" id="resume">Wracam</button></section>`;
+  return `<section class="panel empty-state"><div class="visual-cue" aria-hidden="true">≈</div><h1>Głowa może odpocząć</h1><p class="intro">Gdy będziesz gotowa, wrócimy do jednego kroku.</p><button class="primary-button" id="resume">Wracam</button></section>`;
 }
 
 function endView(state) {
   const feedback = state.modeSessions[state.activeMode].lastFeedback;
-  return `<section class="panel empty-state"><div class="visual-cue" aria-hidden="true">✓</div><p class="eyebrow">Koniec tej serii</p><h1>${escapeHtml(feedback)}</h1><div class="end-actions">${state.activeMode === "review" ? '<button class="primary-button" data-mode="focus">Przejdź do Spokojnego stolika</button>' : ""}<button class="quiet-button" data-screen="home">Wybierz tryb</button></div></section>`;
+  return `<section class="panel empty-state"><div class="visual-cue" aria-hidden="true">✓</div><h1>${escapeHtml(feedback)}</h1><div class="end-actions">${state.activeMode === "review" ? '<button class="primary-button" data-mode="focus">Przejdź do Spokojnego stolika</button>' : ""}<button class="quiet-button" data-screen="home">Wybierz tryb</button></div></section>`;
 }
 
 export function renderApp(root, state) {
@@ -593,6 +675,20 @@ export function renderApp(root, state) {
       : state.screen === "learn" ? `<div class="learning-layout">${learningView(state)}</div>`
         : homeView(state);
   root.innerHTML = `${header()}${content}`;
+}
+
+export function speakQuestion(button, synthesis = globalThis.speechSynthesis, Utterance = globalThis.SpeechSynthesisUtterance) {
+  if (!synthesis || !Utterance) return false;
+  synthesis.cancel();
+  const utterance = new Utterance(button.dataset.speech);
+  utterance.lang = "pl-PL";
+  utterance.rate = 0.86;
+  const stop = () => button.classList.remove("is-speaking");
+  button.classList.add("is-speaking");
+  utterance.addEventListener("end", stop);
+  utterance.addEventListener("error", stop);
+  synthesis.speak(utterance);
+  return true;
 }
 
 if (typeof document !== "undefined") {
@@ -611,17 +707,16 @@ if (typeof document !== "undefined") {
   const bindEvents = () => {
     root.querySelectorAll("[data-mode]").forEach(button => button.addEventListener("click", () => commit(switchMode(state, button.dataset.mode))));
     root.querySelectorAll("[data-screen]").forEach(button => button.addEventListener("click", () => commit({ ...state, screen: button.dataset.screen })));
-    root.querySelectorAll("[data-subject]").forEach(button => button.addEventListener("click", () => {
-      const next = structuredClone(state);
-      next.modeSessions.explore.subject = button.dataset.subject;
-      next.modeSessions.explore.currentTaskId = TASKS.find(task => task.subject === button.dataset.subject).id;
-      commit(next);
-    }));
+    root.querySelectorAll("[data-subject-filter]").forEach(button => button.addEventListener("click", () => commit(switchSubject(state, button.dataset.subjectFilter))));
     root.querySelector("#answer-form")?.addEventListener("submit", event => {
       event.preventDefault();
-      const { state: next } = applyAnswer(state, new FormData(event.currentTarget).get("answer"));
+      const answer = event.submitter?.value ?? new FormData(event.currentTarget).get("answer");
+      const { state: next } = applyAnswer(state, answer);
       commit(next, next.modeSessions[next.activeMode].lastFeedback);
-      root.querySelector("#answer")?.focus();
+      root.querySelector(".answer-choice")?.focus();
+    });
+    root.querySelector("#listen-question")?.addEventListener("click", event => {
+      speakQuestion(event.currentTarget);
     });
     root.querySelector("#resume")?.addEventListener("click", () => {
       const next = structuredClone(state);

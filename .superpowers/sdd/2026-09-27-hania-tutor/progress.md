@@ -10,3 +10,4 @@ Task 2: complete (tests: node --test test.mjs → 10/10 pass)
 Task 3: complete (tests: node --test test.mjs → 13/13 pass)
 Task 4: complete (node --check app.js; tests: 15/15; browser smoke: 3 modes, shared progress, mode cursor, hint, break, keyboard focus, 390px viewport — all pass)
 Final review: 7 findings addressed (review limit/redirect, explorer subject/prerequisites/map, safe storage migration, transfer evidence, manual break, progress details, single live announcement). Verification: 22/22 tests and updated browser smoke pass.
+Visual accessibility refinement: task diagrams, large answer choices, question speech, persistent subject filter, calm instructional motion and reduced-motion path. Verification: 30/30 tests, desktop/mobile visual review, clean browser console.

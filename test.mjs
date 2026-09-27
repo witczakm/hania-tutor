@@ -7,12 +7,15 @@ import {
   chooseAction,
   createInitialState,
   evaluateAnswer,
+  getTaskPresentation,
   loadState,
   normalizeAnswer,
   renderApp,
   saveState,
   selectNextTask,
   switchMode,
+  switchSubject,
+  speakQuestion,
   TASKS,
 } from "./app.js";
 
@@ -173,7 +176,7 @@ test("independent answers in two modes create transfer evidence", () => {
 
 test("explorer respects subject and prerequisite knowledge", () => {
   const state = switchMode(createInitialState(), "explore");
-  state.modeSessions.explore.subject = "nature";
+  state.activeSubject = "nature";
   state.modeSessions.explore.currentTaskId = "life-process-growing";
   assert.equal(selectNextTask(state, "explore").id, "living-mushroom");
 });
@@ -181,9 +184,6 @@ test("explorer respects subject and prerequisite knowledge", () => {
 test("mode-specific views expose explorer map, review counter and progress history", () => {
   const root = { className: "", innerHTML: "" };
   const explore = switchMode(createInitialState(), "explore");
-  renderApp(root, explore);
-  assert.match(root.innerHTML, /Wybierz dziedzinę/);
-  explore.modeSessions.explore.subject = "nature";
   renderApp(root, explore);
   assert.match(root.innerHTML, /explorer-map/);
 
@@ -194,6 +194,48 @@ test("mode-specific views expose explorer map, review counter and progress histo
 
   renderApp(root, { ...review, screen: "progress" });
   assert.match(root.innerHTML, /Ostatnie działania/);
+});
+
+test("subject focus filters every mode and keeps a cursor per subject", () => {
+  let state = switchSubject(createInitialState(), "math");
+  assert.equal(selectNextTask(state, "focus").subject, "math");
+  state.modeSessions.focus.currentTaskId = "time-after-1445";
+  state = switchSubject(state, "nature");
+  assert.equal(selectNextTask(state, "focus").subject, "nature");
+  state = switchSubject(state, "math");
+  assert.equal(selectNextTask(state, "focus").id, "time-after-1445");
+
+  state = switchMode(state, "review");
+  state.knowledge[TASKS.find(task => task.subject === "math").atomId] = { status: "SUPPORTED", nextReviewAt: 0 };
+  state.knowledge[TASKS.find(task => task.subject === "english").atomId] = { status: "SUPPORTED", nextReviewAt: 0 };
+  assert.equal(selectNextTask(state, "review").subject, "math");
+});
+
+test("the subject switch stays visible during learning", () => {
+  const root = { className: "", innerHTML: "" };
+  renderApp(root, switchMode(createInitialState(), "focus"));
+  ["Wszystko", "Matematyka", "Przyroda", "Angielski"].forEach(label => assert.match(root.innerHTML, new RegExp(label)));
+  assert.match(root.innerHTML, /subject-switcher/);
+});
+
+test("every task has a concise visual presentation and valid choices", () => {
+  TASKS.forEach(task => {
+    const presentation = getTaskPresentation(task);
+    assert.ok(presentation.visualLabel, task.id);
+    assert.ok(presentation.prompt.length <= 70, task.id);
+    assert.ok(presentation.choices.length >= 2 && presentation.choices.length <= 3, task.id);
+    assert.ok(presentation.choices.some(choice => task.answers.map(normalizeAnswer).includes(normalizeAnswer(choice))), task.id);
+    assert.ok(presentation.prerequisiteChoices.some(choice => task.prerequisiteAnswers.map(normalizeAnswer).includes(normalizeAnswer(choice))), task.id);
+  });
+});
+
+test("learning view leads with a graphic, listening and large answer choices", () => {
+  const root = { className: "", innerHTML: "" };
+  renderApp(root, switchMode(createInitialState(), "focus"));
+  assert.match(root.innerHTML, /data-learning-visual/);
+  assert.match(root.innerHTML, /id="listen-question"/);
+  assert.match(root.innerHTML, /class="choice-grid"/);
+  assert.doesNotMatch(root.innerHTML, /<input/);
 });
 
 test("HTML exposes the application shell and polite feedback", async () => {
@@ -208,4 +250,30 @@ test("CSS includes keyboard focus, reduced motion and mobile layout", async () =
   assert.match(css, /:focus-visible/);
   assert.match(css, /prefers-reduced-motion/);
   assert.match(css, /@media.*max-width/s);
+});
+
+test("CSS includes calm educational motion with a reduced-motion path", async () => {
+  const css = await readFile(new URL("./styles.css", import.meta.url), "utf8");
+  assert.match(css, /@keyframes clock-advance/);
+  assert.match(css, /@keyframes signal-travel/);
+  assert.match(css, /\.answer-choice/);
+  assert.match(css, /prefers-reduced-motion/);
+});
+
+test("speech cleanup keeps its button reference after the click event ends", () => {
+  const classes = new Set();
+  const button = {
+    dataset: { speech: "Ile minut?" },
+    classList: { add: value => classes.add(value), remove: value => classes.delete(value) },
+  };
+  let utterance;
+  class FakeUtterance {
+    constructor(text) { this.text = text; this.listeners = {}; utterance = this; }
+    addEventListener(name, callback) { this.listeners[name] = callback; }
+  }
+  const synthesis = { cancel() {}, speak() {} };
+  speakQuestion(button, synthesis, FakeUtterance);
+  assert.equal(classes.has("is-speaking"), true);
+  utterance.listeners.end();
+  assert.equal(classes.has("is-speaking"), false);
 });
