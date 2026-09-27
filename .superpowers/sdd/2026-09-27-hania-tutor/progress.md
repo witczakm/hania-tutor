@@ -8,3 +8,4 @@ Pre-flight: Ruling: static source-grep tests from Task 4 are replaced by browser
 Task 1: complete (no git range, tests: node --test test.mjs → 6/6 pass)
 Task 2: complete (tests: node --test test.mjs → 10/10 pass)
 Task 3: complete (tests: node --test test.mjs → 13/13 pass)
+Task 4: complete (node --check app.js; tests: 15/15; browser smoke: 3 modes, shared progress, mode cursor, hint, break, keyboard focus, 390px viewport — all pass)

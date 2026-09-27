@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import {
   ACTIONS,
   applyAnswer,
@@ -103,4 +104,18 @@ test("each answer records one allowed action", () => {
   const { state, action } = applyAnswer(createInitialState(), "wrong");
   assert.ok(Object.values(ACTIONS).includes(action));
   assert.equal(state.history.at(-1).action, action);
+});
+
+test("HTML exposes the application shell and polite feedback", async () => {
+  const html = await readFile(new URL("./index.html", import.meta.url), "utf8");
+  assert.match(html, /<main[^>]+id="app"/);
+  assert.match(html, /aria-live="polite"/);
+  assert.match(html, /<script type="module" src="\.\/app\.js"><\/script>/);
+});
+
+test("CSS includes keyboard focus, reduced motion and mobile layout", async () => {
+  const css = await readFile(new URL("./styles.css", import.meta.url), "utf8");
+  assert.match(css, /:focus-visible/);
+  assert.match(css, /prefers-reduced-motion/);
+  assert.match(css, /@media.*max-width/s);
 });
