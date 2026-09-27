@@ -760,6 +760,10 @@ function homeView(state) {
   return `<section aria-labelledby="welcome-title">
     <h1 id="welcome-title">Co robimy?</h1>
     <p class="intro">Wybierz tryb. ${known ? `Masz rozpoczęte ${known} obszary.` : "Zaczniemy spokojnie."}</p>
+    <div class="nitka-home">
+      <img src="./images/kroliczka-nitka.png" alt="Króliczka Nitka, projektantka mody i prowadząca misje">
+      <div><p class="eyebrow">Nowe mikro-misje</p><h2>Króliczka Nitka ma plan</h2><p>Krótka historia, jeden sprytny problem i jedno pytanie.</p></div>
+    </div>
     <div class="mode-grid">
       ${Object.entries(MODES).map(([id, mode]) => `<button class="mode-card" data-mode="${id}">
         ${modeIcon(id)}<h2>${mode.name}</h2><p>${mode.description}</p><span class="mode-arrow" aria-hidden="true">→</span>

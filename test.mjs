@@ -123,6 +123,23 @@ test("the scene check replaces playback controls with exactly one question", () 
   assert.doesNotMatch(root.innerHTML, /data-scene-next/);
 });
 
+test("home introduces Nitka without removing the three learning modes", () => {
+  const root = { className: "", innerHTML: "" };
+  renderApp(root, createInitialState());
+  assert.match(root.innerHTML, /Króliczka Nitka/);
+  assert.equal((root.innerHTML.match(/class="mode-card"/g) ?? []).length, 3);
+});
+
+test("scene completion survives mode changes and knowledge stays shared", () => {
+  let state = beginScene(createInitialState(), "living-mushroom");
+  state.modeSessions.focus.scene.phase = "check";
+  state = answerScene(state, "królik i roślina").state;
+  state = switchMode(state, "explore");
+  state = switchMode(state, "focus");
+  assert.equal(state.modeSessions.focus.scene.seenTaskIds.includes("living-mushroom"), true);
+  assert.equal(state.knowledge["NATURE.LIVING_CLASSIFICATION"], undefined);
+});
+
 test("normalization catches changes to case, whitespace and Polish punctuation", () => {
   assert.equal(normalizeAnswer("  Piętnaście. "), "pietnascie");
 });
