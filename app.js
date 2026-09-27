@@ -254,12 +254,12 @@ const PRESENTATIONS = {
   "anthropogenic-road": { prompt: "Jaka jest asfaltowa droga?", visualLabel: "Asfaltowa droga zbudowana przez ludzi", choices: ["naturalna", "antropogeniczna"], prerequisiteChoices: ["tak", "nie"] },
   "stimulus-light": { prompt: "Latarka świeci w oczy. Co jest bodźcem?", visualLabel: "Latarka wysyłająca światło w stronę oka", choices: ["światło", "oko", "latarka"], prerequisiteChoices: ["tak", "nie"] },
   "senses-sound": { prompt: "Co odbiera dźwięki?", visualLabel: "Ucho odbierające fale dźwiękowe", choices: ["ucho", "oko", "nos"], prerequisiteChoices: ["słuch", "wzrok", "węch"] },
-  "english-thirteen": { prompt: "Która liczba to thirteen?", visualLabel: "Liczba trzynaście i trzynaście kropek", choices: ["12", "13", "30"], prerequisiteChoices: ["5", "10", "20"] },
-  "english-pencil-case": { prompt: "Który napis oznacza piórnik?", visualLabel: "Piórnik z dwoma ołówkami", choices: ["pencil case", "book", "desk"], prerequisiteChoices: ["pencil", "pen", "book"] },
-  "english-they": { prompt: "Anna i Ola. She czy they?", visualLabel: "Dwie osoby stojące obok siebie", choices: ["she", "they"], prerequisiteChoices: ["she", "he", "they"] },
-  "english-he-is": { prompt: "He ___ ten. Co pasuje?", visualLabel: "Zdanie He, puste miejsce, ten", choices: ["am", "is", "are"], prerequisiteChoices: ["am", "is", "are"] },
-  "english-an-apple": { prompt: "___ apple. Co pasuje?", visualLabel: "Jabłko obok pustego miejsca na a lub an", choices: ["a", "an"], prerequisiteChoices: ["a", "e", "p"] },
-  "english-brown-desk": { prompt: "Który napis oznacza brązowe biurko?", visualLabel: "Brązowe biurko", choices: ["brown desk", "desk brown"], prerequisiteChoices: ["biurko", "krzesło", "książka"] },
+  "english-thirteen": { prompt: "Która liczba to thirteen?", speech: "Which number is thirteen?", prerequisiteSpeech: "Which number is ten?", visualLabel: "Liczba trzynaście i trzynaście kropek", choices: ["12", "13", "30"], prerequisiteChoices: ["5", "10", "20"] },
+  "english-pencil-case": { prompt: "Który napis oznacza piórnik?", speech: "Which phrase means pencil case?", prerequisiteSpeech: "Which word means pencil?", visualLabel: "Piórnik z dwoma ołówkami", choices: ["pencil case", "book", "desk"], prerequisiteChoices: ["pencil", "pen", "book"] },
+  "english-they": { prompt: "Anna i Ola. She czy they?", speech: "Anna and Ola. She or they?", prerequisiteSpeech: "Which pronoun fits one girl?", visualLabel: "Dwie osoby stojące obok siebie", choices: ["she", "they"], prerequisiteChoices: ["she", "he", "they"] },
+  "english-he-is": { prompt: "He ___ ten. Co pasuje?", speech: "He, blank, ten. What fits?", prerequisiteSpeech: "She, blank, ten. What fits?", visualLabel: "Zdanie He, puste miejsce, ten", choices: ["am", "is", "are"], prerequisiteChoices: ["am", "is", "are"] },
+  "english-an-apple": { prompt: "___ apple. Co pasuje?", speech: "Blank apple. A or an?", prerequisiteSpeech: "What is the first letter of apple?", visualLabel: "Jabłko obok pustego miejsca na a lub an", choices: ["a", "an"], prerequisiteChoices: ["a", "e", "p"] },
+  "english-brown-desk": { prompt: "Który napis oznacza brązowe biurko?", speech: "Which phrase means brown desk?", prerequisiteSpeech: "What does desk mean?", visualLabel: "Brązowe biurko", choices: ["brown desk", "desk brown"], prerequisiteChoices: ["biurko", "krzesło", "książka"] },
 };
 
 export function getTaskPresentation(task) {
@@ -298,6 +298,7 @@ function createSession(currentTaskId = TASKS[0].id) {
   return {
     currentTaskId,
     taskBySubject: {},
+    subjectState: {},
     currentStep: 0,
     diagnosticCount: 0,
     helpLevel: 0,
@@ -306,6 +307,7 @@ function createSession(currentTaskId = TASKS[0].id) {
     completedCount: 0,
     subject: null,
     lastFeedback: "",
+    lastResult: "",
   };
 }
 
@@ -339,13 +341,18 @@ export function switchMode(state, activeMode) {
 export function switchSubject(state, activeSubject) {
   if (!["all", ...Object.keys(SUBJECTS)].includes(activeSubject)) return state;
   const next = structuredClone(state);
-  const session = next.modeSessions[next.activeMode];
-  session.taskBySubject ??= {};
-  session.taskBySubject[next.activeSubject] = session.currentTaskId;
+  const fields = ["currentTaskId", "currentStep", "diagnosticCount", "helpLevel", "consecutiveErrors", "correctStreak", "completedCount", "lastFeedback", "lastResult"];
+  Object.values(next.modeSessions).forEach(session => {
+    session.taskBySubject ??= {};
+    session.subjectState ??= {};
+    session.taskBySubject[next.activeSubject] = session.currentTaskId;
+    session.subjectState[next.activeSubject] = Object.fromEntries(fields.map(field => [field, session[field]]));
+    const firstTask = TASKS.find(task => activeSubject === "all" || task.subject === activeSubject) ?? TASKS[0];
+    const restored = session.subjectState[activeSubject] ?? createSession(session.taskBySubject[activeSubject] ?? firstTask.id);
+    fields.forEach(field => { session[field] = restored[field]; });
+    session.taskBySubject[activeSubject] = session.currentTaskId;
+  });
   next.activeSubject = activeSubject;
-  session.currentTaskId = session.taskBySubject[activeSubject]
-    ?? TASKS.find(task => activeSubject === "all" || task.subject === activeSubject)?.id
-    ?? TASKS[0].id;
   return next;
 }
 
@@ -392,6 +399,10 @@ export function selectNextTask(state, modeId = state.activeMode) {
     const isReady = task => !task.prerequisiteAtomId
       || ["INDEPENDENT", "TRANSFERRED", "RETAINED"].includes(state.knowledge[task.prerequisiteAtomId]?.status);
     const tasks = TASKS.filter(task => matchesSubject(task) && isReady(task));
+    const session = state.modeSessions.explore;
+    const cursor = session.taskBySubject?.[state.activeSubject] ?? session.currentTaskId;
+    const current = tasks.find(task => task.id === cursor && !state.knowledge[task.atomId]);
+    if (current) return current;
     return tasks.find(task => !state.knowledge[task.atomId])
       ?? tasks.find(task => state.knowledge[task.atomId]?.status !== "RETAINED")
       ?? tasks[0]
@@ -542,9 +553,12 @@ function escapeHtml(value) {
   return String(value).replace(/[&<>"]/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[character]);
 }
 
-function visualMarkup(task) {
+function visualMarkup(task, step = 0) {
   const presentation = getTaskPresentation(task);
-  const open = `<div class="learning-visual visual-${task.visual}" data-learning-visual role="img" aria-label="${escapeHtml(presentation.visualLabel)}"><svg viewBox="0 0 320 180" aria-hidden="true" focusable="false">`;
+  if (step === 1) {
+    return `<div class="learning-visual prerequisite-visual" data-learning-visual data-visual-step="prerequisite" role="img" aria-label="Wracamy do jednego wcześniejszego kroku"><svg viewBox="0 0 320 180" aria-hidden="true" focusable="false"><circle class="visual-fill" cx="95" cy="90" r="24"/><circle class="visual-paper" cx="225" cy="90" r="24"/><path d="M190 90H128m0 0 18-16m-18 16 18 16"/><text class="visual-small" x="160" y="145">1 KROK WCZEŚNIEJ</text></svg></div>`;
+  }
+  const open = `<div class="learning-visual visual-${task.visual}" data-learning-visual data-visual-step="main" role="img" aria-label="${escapeHtml(presentation.visualLabel)}"><svg viewBox="0 0 320 180" aria-hidden="true" focusable="false">`;
   const close = "</svg></div>";
   const visuals = {
     "clock-minute-hand": `<circle class="visual-paper" cx="160" cy="90" r="67"/><circle cx="160" cy="90" r="61"/><path d="M160 34v10M216 90h-10M160 146v-10M104 90h10"/><path class="clock-hour" d="M160 90l30 20"/><path class="clock-minute" d="M160 90l-31-48"/><circle class="visual-fill" cx="160" cy="90" r="6"/>`,
@@ -631,8 +645,8 @@ function learningView(state) {
   const resultClass = session.lastResult ? ` result-${session.lastResult}` : "";
   return `${modeNav(state.activeMode)}<div>${subjectSwitcher(state.activeSubject)}${state.activeMode === "explore" ? explorerMap(state, task.subject) : ""}<section class="question-card${resultClass}" aria-labelledby="question-title">
     <div class="progress-line"><span class="subject-tag">${SUBJECTS[task.subject]}</span><span>${modeDetail}</span></div>
-    ${visualMarkup(task)}
-    ${feedback}<div class="question-heading"><h1 id="question-title">${escapeHtml(prompt)}</h1><button class="listen-button" type="button" id="listen-question" data-speech="${escapeHtml(prompt)}" aria-label="Posłuchaj pytania"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9v6h4l5 4V5L9 9H5Zm12 1c1.3 1.3 1.3 2.7 0 4m2.5-6.5c3 3 3 6 0 9"/></svg><span>Posłuchaj</span></button></div>
+    ${visualMarkup(task, session.currentStep)}
+    ${feedback}<div class="question-heading"><h1 id="question-title">${escapeHtml(prompt)}</h1><button class="listen-button" type="button" id="listen-question" data-speech="${escapeHtml(task.subject === "english" ? (session.currentStep === 1 ? presentation.prerequisiteSpeech : presentation.speech) : prompt)}" data-lang="${task.subject === "english" ? "en-GB" : "pl-PL"}" aria-label="Posłuchaj pytania"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9v6h4l5 4V5L9 9H5Zm12 1c1.3 1.3 1.3 2.7 0 4m2.5-6.5c3 3 3 6 0 9"/></svg><span>Posłuchaj</span></button></div>
     <form class="answer-form" id="answer-form" aria-labelledby="question-title">
       <div class="choice-grid">${choices.map(choice => `<button class="answer-choice" type="submit" name="answer" value="${escapeHtml(choice)}">${escapeHtml(choice)}</button>`).join("")}</div>
       <button class="unsure-button" type="submit" name="answer" value="nie wiem">Nie wiem</button>
@@ -681,7 +695,7 @@ export function speakQuestion(button, synthesis = globalThis.speechSynthesis, Ut
   if (!synthesis || !Utterance) return false;
   synthesis.cancel();
   const utterance = new Utterance(button.dataset.speech);
-  utterance.lang = "pl-PL";
+  utterance.lang = button.dataset.lang || "pl-PL";
   utterance.rate = 0.86;
   const stop = () => button.classList.remove("is-speaking");
   button.classList.add("is-speaking");
@@ -696,24 +710,24 @@ if (typeof document !== "undefined") {
   const announcer = document.querySelector("#announcer");
   let state = loadState(localStorage);
 
-  const commit = (next, announcement = "") => {
+  const commit = (next, announcement = "", focusSelector = "") => {
     state = next;
     saveState(localStorage, state);
     renderApp(root, state);
     announcer.textContent = announcement;
     bindEvents();
+    if (focusSelector) root.querySelector(focusSelector)?.focus();
   };
 
   const bindEvents = () => {
-    root.querySelectorAll("[data-mode]").forEach(button => button.addEventListener("click", () => commit(switchMode(state, button.dataset.mode))));
+    root.querySelectorAll("[data-mode]").forEach(button => button.addEventListener("click", () => commit(switchMode(state, button.dataset.mode), "", `[data-mode="${button.dataset.mode}"]`)));
     root.querySelectorAll("[data-screen]").forEach(button => button.addEventListener("click", () => commit({ ...state, screen: button.dataset.screen })));
-    root.querySelectorAll("[data-subject-filter]").forEach(button => button.addEventListener("click", () => commit(switchSubject(state, button.dataset.subjectFilter))));
+    root.querySelectorAll("[data-subject-filter]").forEach(button => button.addEventListener("click", () => commit(switchSubject(state, button.dataset.subjectFilter), "", `[data-subject-filter="${button.dataset.subjectFilter}"]`)));
     root.querySelector("#answer-form")?.addEventListener("submit", event => {
       event.preventDefault();
       const answer = event.submitter?.value ?? new FormData(event.currentTarget).get("answer");
       const { state: next } = applyAnswer(state, answer);
-      commit(next, next.modeSessions[next.activeMode].lastFeedback);
-      root.querySelector(".answer-choice")?.focus();
+      commit(next, next.modeSessions[next.activeMode].lastFeedback, ".answer-choice");
     });
     root.querySelector("#listen-question")?.addEventListener("click", event => {
       speakQuestion(event.currentTarget);

@@ -401,7 +401,7 @@ h1 {
 @keyframes incorrect-confirm { 40% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
 
 .mode-focus { --accent: #386d50; --accent-soft: #e5f0e8; }
-.mode-explore { --accent: #9a642f; --accent-soft: #f6e8d7; }
+.mode-explore { --accent: #77481f; --accent-soft: #f6e8d7; }
 .mode-review { --accent: #536b58; --accent-soft: #e8eee8; }
 
 .progress-grid {

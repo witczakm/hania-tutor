@@ -211,6 +211,24 @@ test("subject focus filters every mode and keeps a cursor per subject", () => {
   assert.equal(selectNextTask(state, "review").subject, "math");
 });
 
+test("subject focus keeps diagnosis and feedback separate per subject", () => {
+  let state = switchSubject(createInitialState(), "math");
+  state = applyAnswer(state, "źle").state;
+  assert.equal(state.modeSessions.focus.currentStep, 1);
+  state = switchSubject(state, "english");
+  assert.equal(state.modeSessions.focus.currentStep, 0);
+  assert.equal(state.modeSessions.focus.lastFeedback, "");
+  state = switchSubject(state, "math");
+  assert.equal(state.modeSessions.focus.currentStep, 1);
+});
+
+test("explorer resumes its unseen ready cursor", () => {
+  const state = switchMode(switchSubject(createInitialState(), "math"), "explore");
+  state.modeSessions.explore.currentTaskId = "roman-nine";
+  state.modeSessions.explore.taskBySubject.math = "roman-nine";
+  assert.equal(selectNextTask(state, "explore").id, "roman-nine");
+});
+
 test("the subject switch stays visible during learning", () => {
   const root = { className: "", innerHTML: "" };
   renderApp(root, switchMode(createInitialState(), "focus"));
@@ -238,6 +256,15 @@ test("learning view leads with a graphic, listening and large answer choices", (
   assert.doesNotMatch(root.innerHTML, /<input/);
 });
 
+test("a prerequisite question uses a neutral earlier-step graphic", () => {
+  const root = { className: "", innerHTML: "" };
+  const state = switchMode(createInitialState(), "focus");
+  state.modeSessions.focus.currentStep = 1;
+  renderApp(root, state);
+  assert.match(root.innerHTML, /data-visual-step="prerequisite"/);
+  assert.doesNotMatch(root.innerHTML, /Zegar z długą wskazówką na jedenastce/);
+});
+
 test("HTML exposes the application shell and polite feedback", async () => {
   const html = await readFile(new URL("./index.html", import.meta.url), "utf8");
   assert.match(html, /<main[^>]+id="app"/);
@@ -263,7 +290,7 @@ test("CSS includes calm educational motion with a reduced-motion path", async ()
 test("speech cleanup keeps its button reference after the click event ends", () => {
   const classes = new Set();
   const button = {
-    dataset: { speech: "Ile minut?" },
+    dataset: { speech: "Which number is thirteen?", lang: "en-GB" },
     classList: { add: value => classes.add(value), remove: value => classes.delete(value) },
   };
   let utterance;
@@ -273,6 +300,7 @@ test("speech cleanup keeps its button reference after the click event ends", () 
   }
   const synthesis = { cancel() {}, speak() {} };
   speakQuestion(button, synthesis, FakeUtterance);
+  assert.equal(utterance.lang, "en-GB");
   assert.equal(classes.has("is-speaking"), true);
   utterance.listeners.end();
   assert.equal(classes.has("is-speaking"), false);
