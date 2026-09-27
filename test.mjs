@@ -37,6 +37,7 @@ test("the pilot has one scene per subject and one check question per scene", () 
 
 test("a new explorer atom offers its matching Nitka scene once", () => {
   const state = switchSubject(switchMode(createInitialState(), "explore"), "math");
+  state.knowledge["TIME.READ_MINUTES"] = { status: "INDEPENDENT" };
   state.modeSessions.explore.currentTaskId = "time-after-1445";
   state.modeSessions.explore.taskBySubject.math = "time-after-1445";
   const task = TASKS.find(item => item.id === "time-after-1445");
@@ -88,6 +89,38 @@ test("a located gap opens its matching scene as the single GIVE_EXAMPLE action",
   const result = applyAnswer(state, "15");
   assert.equal(result.action, ACTIONS.GIVE_EXAMPLE);
   assert.equal(result.state.modeSessions.focus.scene.taskId, "time-after-1445");
+});
+
+test("a new explorer task shows one Nitka invitation instead of the task question", () => {
+  const root = { className: "", innerHTML: "" };
+  const state = switchSubject(switchMode(createInitialState(), "explore"), "math");
+  state.knowledge["TIME.READ_MINUTES"] = { status: "INDEPENDENT" };
+  state.modeSessions.explore.currentTaskId = "time-after-1445";
+  state.modeSessions.explore.taskBySubject.math = "time-after-1445";
+  renderApp(root, state);
+  assert.match(root.innerHTML, /data-scene-start="time-after-1445"/);
+  assert.doesNotMatch(root.innerHTML, /id="answer-form"/);
+});
+
+test("a scene frame keeps navigation available beside recorded audio", () => {
+  const root = { className: "", innerHTML: "" };
+  const state = beginScene(createInitialState(), "time-after-1445");
+  renderApp(root, state);
+  assert.match(root.innerHTML, /<audio[^>]+controls/);
+  assert.match(root.innerHTML, /nitka-math-1\.mp3/);
+  assert.match(root.innerHTML, /Wielkie wyzwanie Nitki/);
+  assert.match(root.innerHTML, /data-scene-next/);
+  assert.match(root.innerHTML, /data-scene-skip/);
+});
+
+test("the scene check replaces playback controls with exactly one question", () => {
+  const root = { className: "", innerHTML: "" };
+  const state = beginScene(createInitialState(), "english-an-apple");
+  state.modeSessions.focus.scene.phase = "check";
+  renderApp(root, state);
+  assert.equal((root.innerHTML.match(/\?/g) ?? []).length, 1);
+  assert.match(root.innerHTML, /id="scene-answer-form"/);
+  assert.doesNotMatch(root.innerHTML, /data-scene-next/);
 });
 
 test("normalization catches changes to case, whitespace and Polish punctuation", () => {

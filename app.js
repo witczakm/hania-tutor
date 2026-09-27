@@ -478,6 +478,7 @@ export function shouldOfferScene(state, task) {
 export function beginScene(state, taskId) {
   if (!SCENES[taskId]) return state;
   const next = structuredClone(state);
+  next.screen = "learn";
   next.modeSessions[next.activeMode].scene = {
     ...next.modeSessions[next.activeMode].scene,
     taskId,
@@ -786,10 +787,46 @@ function explorerMap(state, subject) {
   }).join("")}</div>`;
 }
 
+function sceneIntroView(task) {
+  const scene = SCENES[task.id];
+  return `<section class="scene-card scene-intro" aria-labelledby="scene-title">
+    <img class="nitka-portrait" src="./images/kroliczka-nitka.png" alt="Króliczka Nitka z notesem i miarką krawiecką">
+    <div><p class="eyebrow">Misja Nitki · ${SUBJECTS[scene.subject]}</p>
+    <h1 id="scene-title">${escapeHtml(scene.title)}</h1>
+    <p class="intro">Jedna krótka historia. Potem jedno pytanie.</p>
+    <button class="primary-button" type="button" data-scene-start="${task.id}">Zaczynam misję</button></div>
+  </section>`;
+}
+
+function sceneView(state) {
+  const sceneState = state.modeSessions[state.activeMode].scene;
+  const scene = SCENES[sceneState.taskId];
+  if (!scene) return "";
+  if (sceneState.phase === "check") return `<section class="scene-card" aria-labelledby="scene-question">
+    <p class="eyebrow">Jedno pytanie</p><h1 id="scene-question">${escapeHtml(scene.check.prompt)}</h1>
+    <form id="scene-answer-form" class="answer-form" aria-labelledby="scene-question">
+      <div class="choice-grid">${scene.check.choices.map(choice => `<button class="answer-choice" type="submit" name="answer" value="${escapeHtml(choice)}">${escapeHtml(choice)}</button>`).join("")}</div>
+    </form>
+  </section>`;
+  const step = scene.steps[sceneState.step];
+  return `<section class="scene-card" aria-labelledby="scene-title">
+    <div class="scene-progress" aria-label="Kadr ${sceneState.step + 1} z ${scene.steps.length}">${sceneState.step + 1}/${scene.steps.length}</div>
+    <div class="scene-frame scene-${escapeHtml(step.visual)}"><img src="./images/kroliczka-nitka.png" alt="Króliczka Nitka prowadzi misję"><div class="scene-prop" aria-hidden="true"></div></div>
+    ${sceneState.feedback ? `<p class="feedback">${escapeHtml(sceneState.feedback)}</p>` : ""}
+    <h1 id="scene-title">${escapeHtml(scene.title)}</h1>
+    <p class="scene-transcript">${escapeHtml(step.transcript)}</p>
+    <audio id="scene-audio" controls preload="metadata" src="${step.audio}">Nagranie: ${escapeHtml(step.transcript)}</audio>
+    <div class="scene-actions"><button class="quiet-button" type="button" data-scene-replay>Jeszcze raz</button><button class="quiet-button" type="button" data-scene-skip>Pomiń</button><button class="primary-button" type="button" data-scene-next>Dalej</button></div>
+  </section>`;
+}
+
 function learningView(state) {
   const task = selectNextTask(state);
   if (!task) return `${modeNav(state.activeMode)}<div>${subjectSwitcher(state.activeSubject)}<section class="question-card empty-state"><div class="visual-cue" aria-hidden="true">✓</div><h1>Na teraz wszystko powtórzone</h1><p class="intro">Wróć później.</p><button class="primary-button" data-screen="home">Wybierz inny tryb</button></section></div>`;
   const session = state.modeSessions[state.activeMode];
+  const map = state.activeMode === "explore" ? explorerMap(state, task.subject) : "";
+  if (session.scene.taskId) return `${modeNav(state.activeMode)}<div>${subjectSwitcher(state.activeSubject)}${map}${sceneView(state)}</div>`;
+  if (shouldOfferScene(state, task)) return `${modeNav(state.activeMode)}<div>${subjectSwitcher(state.activeSubject)}${map}${sceneIntroView(task)}</div>`;
   const presentation = getTaskPresentation(task);
   const prompt = currentPrompt(task, session);
   const choices = session.currentStep === 1 ? presentation.prerequisiteChoices : presentation.choices;
@@ -890,6 +927,20 @@ if (typeof document !== "undefined") {
       commit({ ...state, screen: button.dataset.screen }, "", focusSelector);
     }));
     root.querySelectorAll("[data-subject-filter]").forEach(button => button.addEventListener("click", () => commit(switchSubject(state, button.dataset.subjectFilter), "", `[data-subject-filter="${button.dataset.subjectFilter}"]`)));
+    root.querySelector("[data-scene-start]")?.addEventListener("click", event => commit(beginScene(state, event.currentTarget.dataset.sceneStart)));
+    root.querySelector("[data-scene-next]")?.addEventListener("click", () => commit(advanceScene(state), "", "[data-scene-next]"));
+    root.querySelector("[data-scene-skip]")?.addEventListener("click", () => commit(skipScene(state), "Scenka pominięta.", ".answer-choice"));
+    root.querySelector("[data-scene-replay]")?.addEventListener("click", () => {
+      const audio = root.querySelector("#scene-audio");
+      if (!audio) return;
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    });
+    root.querySelector("#scene-answer-form")?.addEventListener("submit", event => {
+      event.preventDefault();
+      const { state: next, result } = answerScene(state, event.submitter?.value ?? "");
+      commit(next, result === "correct" ? "Dobrze. Teraz sprawdzimy tę wiedzę w nowej sytuacji." : "Wróćmy do jednego potrzebnego kadru.");
+    });
     root.querySelector("#answer-form")?.addEventListener("submit", event => {
       event.preventDefault();
       const answer = event.submitter?.value ?? new FormData(event.currentTarget).get("answer");
