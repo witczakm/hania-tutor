@@ -480,15 +480,21 @@ h1 {
 
 .scene-frame img { position: absolute; z-index: 1; left: 2%; bottom: -34%; width: min(48%, 250px); }
 .scene-prop { position: absolute; right: 8%; top: 18%; width: 42%; aspect-ratio: 1; border-radius: 50%; background: color-mix(in srgb, var(--accent) 18%, white); }
+.scene-prop { display: grid; place-items: center; box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--accent) 30%, white); }
+.scene-prop span { font-size: clamp(3.8rem, 11vw, 7rem); line-height: 1; filter: drop-shadow(0 7px 9px rgb(36 47 44 / 12%)); animation: prop-breathe 2.8s ease-in-out infinite; }
 .scene-clock-jumps .scene-prop { border-radius: 18px; background: linear-gradient(90deg, #fff 0 31%, #e6d2a5 31% 34%, #fff 34% 65%, #e6d2a5 65% 68%, #fff 68%); }
 .scene-living .scene-prop { background: radial-gradient(circle at 35% 55%, #69a66f 0 18%, transparent 19%), radial-gradient(circle at 70% 55%, #8c6a45 0 18%, transparent 19%); }
 .scene-english-line .scene-prop { border-radius: 18px; background: #fff; box-shadow: inset 0 0 0 3px #347b78; }
+.scene-calendar .scene-prop, .scene-classroom .scene-prop, .scene-wardrobe .scene-prop { border-radius: 22px; background: #fff9ee; }
+.scene-roman .scene-prop, .scene-english-line .scene-prop { border-radius: 22px; background: #fff; }
+.scene-stimulus .scene-prop, .scene-receptor .scene-prop, .scene-senses .scene-prop { background: #e9f2ff; }
 .scene-progress { margin-bottom: 12px; color: var(--ink-soft); font-weight: 760; }
 .scene-transcript { max-width: 680px; font-size: 1.16rem; line-height: 1.6; }
 .scene-card audio { width: 100%; margin: 4px 0 20px; }
 .scene-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
 
 @keyframes scene-reveal { from { transform: translateY(8px); opacity: .4; } to { transform: translateY(0); opacity: 1; } }
+@keyframes prop-breathe { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-5px) rotate(1deg); } }
 
 @media (max-width: 760px) {
   .app-shell { width: min(100% - 24px, 620px); padding-top: 16px; }

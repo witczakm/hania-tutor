@@ -25,44 +25,54 @@ import {
   TASKS,
 } from "./app.js";
 
-test("the pilot has one scene per subject and one check question per scene", () => {
+test("each subject lesson teaches several ideas before its end quiz", () => {
   assert.deepEqual(Object.keys(SCENES), ["time-after-1445", "living-mushroom", "english-an-apple"]);
   Object.values(SCENES).forEach(scene => {
-    assert.ok(scene.steps.length >= 3 && scene.steps.length <= 5, scene.id);
-    assert.equal((scene.check.prompt.match(/\?/g) ?? []).length, 1, scene.id);
-    assert.ok(scene.check.choices.length >= 2 && scene.check.choices.length <= 3, scene.id);
-    assert.ok(scene.check.choices.some(choice => scene.check.answers.map(normalizeAnswer).includes(normalizeAnswer(choice))), scene.id);
+    assert.ok(scene.steps.length >= 7, scene.id);
+    assert.ok(scene.checks.length >= 5, scene.id);
+    scene.checks.forEach(check => {
+      assert.equal((check.prompt.match(/\?/g) ?? []).length, 1, check.prompt);
+      assert.ok(check.choices.length >= 2 && check.choices.length <= 3, check.prompt);
+      assert.ok(check.choices.some(choice => check.answers.map(normalizeAnswer).includes(normalizeAnswer(choice))), check.prompt);
+    });
   });
 });
 
-test("a new explorer atom offers its matching Nitka scene once", () => {
+test("a new explorer subject offers its Nitka lesson once", () => {
   const state = switchSubject(switchMode(createInitialState(), "explore"), "math");
-  state.knowledge["TIME.READ_MINUTES"] = { status: "INDEPENDENT" };
-  state.modeSessions.explore.currentTaskId = "time-after-1445";
-  state.modeSessions.explore.taskBySubject.math = "time-after-1445";
-  const task = TASKS.find(item => item.id === "time-after-1445");
+  const task = TASKS.find(item => item.id === "clock-minute-hand");
   assert.equal(shouldOfferScene(state, task), true);
   assert.equal(shouldOfferScene(skipScene(beginScene(state, task.id)), task), false);
 });
 
 test("a wrong scene answer replays one frame without changing knowledge", () => {
   let state = beginScene(createInitialState(), "time-after-1445");
-  state = advanceScene(advanceScene(advanceScene(state)));
+  state.modeSessions.focus.scene.phase = "check";
   const before = structuredClone(state.knowledge);
   const result = answerScene(state, "15:45");
   assert.equal(result.result, "incorrect");
-  assert.equal(result.state.modeSessions.focus.scene.step, SCENES["time-after-1445"].replayStep);
+  assert.equal(result.state.modeSessions.focus.scene.step, SCENES["time-after-1445"].checks[0].replayStep);
+  assert.equal(result.state.modeSessions.focus.scene.returnToQuiz, true);
   assert.deepEqual(result.state.knowledge, before);
 });
 
-test("a correct scene answer reveals the transfer task without granting mastery", () => {
+test("correct quiz answers advance one at a time and record supported knowledge", () => {
   const state = beginScene(createInitialState(), "time-after-1445");
   state.modeSessions.focus.scene.phase = "check";
-  const result = answerScene(state, "15:15");
+  const result = answerScene(state, "55");
   assert.equal(result.result, "correct");
-  assert.equal(result.state.modeSessions.focus.scene.taskId, "");
-  assert.equal(result.state.modeSessions.focus.scene.seenTaskIds.includes("time-after-1445"), true);
-  assert.equal(result.state.knowledge["TIME.ADD_ACROSS_HOUR"], undefined);
+  assert.equal(result.state.modeSessions.focus.scene.taskId, "time-after-1445");
+  assert.equal(result.state.modeSessions.focus.scene.quizIndex, 1);
+  assert.equal(result.state.knowledge["TIME.READ_MINUTES"].status, "SUPPORTED");
+});
+
+test("a replayed teaching frame returns to the same quiz question", () => {
+  let state = beginScene(createInitialState(), "time-after-1445");
+  state.modeSessions.focus.scene.phase = "check";
+  state = answerScene(state, "50").state;
+  state = advanceScene(state);
+  assert.equal(state.modeSessions.focus.scene.phase, "check");
+  assert.equal(state.modeSessions.focus.scene.quizIndex, 0);
 });
 
 test("old saved sessions receive safe scene defaults", () => {
@@ -70,6 +80,14 @@ test("old saved sessions receive safe scene defaults", () => {
   Object.values(old.modeSessions).forEach(session => { delete session.scene; });
   const loaded = loadState(memoryStorage({ "hania-tutor-state-v1": JSON.stringify(old) }));
   assert.deepEqual(loaded.modeSessions.focus.scene, createInitialState().modeSessions.focus.scene);
+});
+
+test("an in-progress old scene receives the new quiz cursor safely", () => {
+  const old = createInitialState();
+  old.modeSessions.focus.scene = { taskId: "time-after-1445", step: 2, phase: "story", feedback: "", seenTaskIds: [] };
+  const loaded = loadState(memoryStorage({ "hania-tutor-state-v1": JSON.stringify(old) }));
+  assert.equal(loaded.modeSessions.focus.scene.quizIndex, 0);
+  assert.equal(loaded.modeSessions.focus.scene.returnToQuiz, false);
 });
 
 test("subject switching preserves the scene cursor for each subject", () => {
@@ -102,13 +120,12 @@ test("a new explorer task shows one Nitka invitation instead of the task questio
   assert.doesNotMatch(root.innerHTML, /id="answer-form"/);
 });
 
-test("a scene frame keeps navigation available beside recorded audio", () => {
+test("a scene frame keeps a large visual and simple navigation", () => {
   const root = { className: "", innerHTML: "" };
   const state = beginScene(createInitialState(), "time-after-1445");
   renderApp(root, state);
-  assert.match(root.innerHTML, /<audio[^>]+controls/);
-  assert.match(root.innerHTML, /nitka-math-1\.mp3/);
-  assert.match(root.innerHTML, /Wielkie wyzwanie Nitki/);
+  assert.match(root.innerHTML, /scene-prop/);
+  assert.match(root.innerHTML, /Nitka szykuje pokaz mody/);
   assert.match(root.innerHTML, /data-scene-next/);
   assert.match(root.innerHTML, /data-scene-skip/);
 });
@@ -123,21 +140,32 @@ test("the scene check replaces playback controls with exactly one question", () 
   assert.doesNotMatch(root.innerHTML, /data-scene-next/);
 });
 
+test("Polish teaching scenes do not expose the rejected synthetic narration", () => {
+  const root = { className: "", innerHTML: "" };
+  const state = beginScene(createInitialState(), "time-after-1445");
+  renderApp(root, state);
+  assert.doesNotMatch(root.innerHTML, /<audio/);
+  assert.doesNotMatch(root.innerHTML, /nitka-math-1\.mp3/);
+});
+
 test("home introduces Nitka without removing the three learning modes", () => {
   const root = { className: "", innerHTML: "" };
   renderApp(root, createInitialState());
   assert.match(root.innerHTML, /Króliczka Nitka/);
+  assert.match(root.innerHTML, /Najpierw obrazkowa opowieść/);
   assert.equal((root.innerHTML.match(/class="mode-card"/g) ?? []).length, 3);
 });
 
 test("scene completion survives mode changes and knowledge stays shared", () => {
   let state = beginScene(createInitialState(), "living-mushroom");
   state.modeSessions.focus.scene.phase = "check";
-  state = answerScene(state, "królik i roślina").state;
+  for (const answer of ["tak", "z komórek", "wzrost", "antropogeniczna", "światło", "ucho"]) {
+    state = answerScene(state, answer).state;
+  }
   state = switchMode(state, "explore");
   state = switchMode(state, "focus");
   assert.equal(state.modeSessions.focus.scene.seenTaskIds.includes("living-mushroom"), true);
-  assert.equal(state.knowledge["NATURE.LIVING_CLASSIFICATION"], undefined);
+  assert.equal(state.knowledge["NATURE.LIVING_CLASSIFICATION"].status, "SUPPORTED");
 });
 
 test("normalization catches changes to case, whitespace and Polish punctuation", () => {
@@ -375,13 +403,18 @@ test("every task has a concise visual presentation and valid choices", () => {
   });
 });
 
-test("learning view leads with a graphic, listening and large answer choices", () => {
+test("learning view leads with a graphic and large answer choices", () => {
   const root = { className: "", innerHTML: "" };
   renderApp(root, switchMode(createInitialState(), "focus"));
   assert.match(root.innerHTML, /data-learning-visual/);
-  assert.match(root.innerHTML, /id="listen-question"/);
   assert.match(root.innerHTML, /class="choice-grid"/);
   assert.doesNotMatch(root.innerHTML, /<input/);
+});
+
+test("Polish exercises do not offer the rejected synthetic voice", () => {
+  const root = { className: "", innerHTML: "" };
+  renderApp(root, switchMode(createInitialState(), "focus"));
+  assert.doesNotMatch(root.innerHTML, /id="listen-question"/);
 });
 
 test("every question and prerequisite has a recorded audio file", async () => {
@@ -393,9 +426,11 @@ test("every question and prerequisite has a recorded audio file", async () => {
   }
 });
 
-test("every Nitka scene step has a non-empty recorded clip", async () => {
+test("only explicitly approved scene audio is exposed and its file exists", async () => {
   for (const scene of Object.values(SCENES)) {
     for (const step of scene.steps) {
+      if (!step.audio) continue;
+      assert.equal(step.lang, "en-GB");
       const clip = await stat(new URL(step.audio, import.meta.url));
       assert.ok(clip.size > 1_000, step.audio);
     }
@@ -406,19 +441,19 @@ test("the math task transfers the scene rule to a new time", () => {
   const task = TASKS.find(item => item.id === "time-after-1445");
   assert.equal(task.prompt.includes("16:35"), true);
   assert.equal(evaluateAnswer(task, "17:05"), "correct");
-  assert.equal(SCENES[task.id].check.prompt.includes("Nitki"), true);
+  assert.equal(SCENES[task.id].checks.some(check => check.atomId === task.atomId), true);
 });
 
-test("the recorded math frame keeps its approved transcript", () => {
+test("the math chapter explains the clock before elapsed time", () => {
   assert.equal(
     SCENES["time-after-1445"].steps[1].transcript,
-    "Jest 14:45. Pokaz zaczyna się za 30 minut. Nitka obstawia 15:45, ale jej miarka czasu chyba się zaplątała.",
+    "Na zegarze każda liczba to 5 minut. Długa wskazówka na 11 oznacza 55 minut.",
   );
 });
 
 test("scene transitions restore keyboard focus to the next micro-step", async () => {
   const source = await readFile(new URL("./app.js", import.meta.url), "utf8");
-  assert.match(source, /commit\(beginScene\([^;]+, "", "#scene-audio"\)/);
+  assert.match(source, /commit\(beginScene\([^;]+, "", "\[data-scene-next\]"\)/);
   assert.match(source, /result === "correct" \? "\.answer-choice" : "\[data-scene-next\]"/);
 });
 

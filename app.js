@@ -247,45 +247,79 @@ export const SCENES = Object.freeze({
     id: "nitka-math-time",
     taskId: "time-after-1445",
     subject: "math",
-    title: "Pokaz za pół godziny",
-    replayStep: 1,
+    title: "Pokaz mody bez spóźnienia",
     steps: [
-      { audio: "./audio/scenes/nitka-math-1.mp3", lang: "pl-PL", visual: "runway", transcript: "Wielkie wyzwanie Nitki: przygotować pokaz mody i nie spóźnić kokardy." },
-      { audio: "./audio/scenes/nitka-math-2.mp3", lang: "pl-PL", visual: "clock-start", transcript: "Jest 14:45. Pokaz zaczyna się za 30 minut. Nitka obstawia 15:45, ale jej miarka czasu chyba się zaplątała." },
-      { audio: "./audio/scenes/nitka-math-3.mp3", lang: "pl-PL", visual: "clock-jumps", transcript: "Robimy dwa spokojne skoki: 15 minut do 15:00 i jeszcze 15 minut do 15:15." },
+      { icon: "🎀", visual: "runway", transcript: "Nitka szykuje pokaz mody. Musi ogarnąć zegar, kalendarz i miarkę. Kokarda już panikuje." },
+      { icon: "🕚", visual: "clock-start", transcript: "Na zegarze każda liczba to 5 minut. Długa wskazówka na 11 oznacza 55 minut." },
+      { icon: "⏱️", visual: "clock-jumps", transcript: "Od 14:45 do 15:00 jest 15 minut. Jeszcze 15 minut daje 15:15. Razem: 30 minut." },
+      { icon: "📅", visual: "calendar", transcript: "W kalendarzu idziemy dzień po dniu. Od poniedziałku 8 maja do soboty mijamy 5 dni: sobota to 13 maja." },
+      { icon: "Ⅴ", visual: "roman", transcript: "Rzymskie I to 1, V to 5, X to 10. Mniejsza liczba przed większą oznacza odejmowanie." },
+      { icon: "Ⅸ", visual: "roman", transcript: "Dlatego IX to 10 minus 1, czyli 9. Nitka nie zamawia dziewięciu kapeluszy przez pomyłkę." },
+      { icon: "📏", visual: "measure", transcript: "Milimetry mierzą drobiazgi, centymetry małe przedmioty, metry pokój, a kilometry trasę." },
+      { icon: "🏠", visual: "measure", transcript: "Pokój może mieć 315 centymetrów, czyli 3 metry i 15 centymetrów. Nie 315 kilometrów — to byłby bardzo długi pokój." },
     ],
-    check: { prompt: "O której zacznie się pokaz Nitki?", choices: ["15:00", "15:15", "15:45"], answers: ["15:15", "1515"] },
+    checks: [
+      { atomId: "TIME.READ_MINUTES", replayStep: 1, prompt: "Długa wskazówka jest na 11. Ile to minut?", choices: ["50", "55", "60"], answers: ["55"] },
+      { atomId: "TIME.ADD_ACROSS_HOUR", replayStep: 2, prompt: "Która godzina będzie 30 minut po 14:45?", choices: ["15:00", "15:15", "15:45"], answers: ["15:15", "1515"] },
+      { atomId: "DATE.WEEKDAY_OFFSET", replayStep: 3, prompt: "Poniedziałek to 8 maja. Kiedy będzie sobota?", choices: ["10 maja", "13 maja", "15 maja"], answers: ["13 maja", "13"] },
+      { atomId: "NUMBER.ROMAN_SUBTRACTIVE", replayStep: 5, prompt: "Jaką liczbę oznacza IX?", choices: ["6", "9", "11"], answers: ["9"] },
+      { atomId: "MEASURE.UNIT_LENGTH", replayStep: 7, prompt: "Pokój ma długość 315. Która jednostka pasuje?", choices: ["cm", "m", "km"], answers: ["cm", "centymetry", "centymetrow"] },
+    ],
   },
   "living-mushroom": {
     id: "nitka-nature-organism",
     taskId: "living-mushroom",
     subject: "nature",
-    title: "Kapelusz, który nie rośnie",
-    replayStep: 1,
+    title: "Ogród, który odpowiada",
     steps: [
-      { audio: "./audio/scenes/nitka-nature-1.mp3", lang: "pl-PL", visual: "garden", transcript: "Nitka urządza ogród do zdjęcia nowej kolekcji: królik, roślina i bardzo elegancki kapelusz." },
-      { audio: "./audio/scenes/nitka-nature-2.mp3", lang: "pl-PL", visual: "living", transcript: "Królik i roślina rosną, oddychają i potrzebują wody. To organizmy." },
-      { audio: "./audio/scenes/nitka-nature-3.mp3", lang: "pl-PL", visual: "hat", transcript: "Kapelusz może być w kwiatki, ale sam nie rośnie i nie oddycha. Moda ma granice." },
+      { icon: "🌿", visual: "garden", transcript: "Nitka urządza ogród do zdjęcia kolekcji: królik, grzyb, kamień i bardzo elegancki kapelusz." },
+      { icon: "🐇", visual: "living", transcript: "Królik, grzyb i roślina są organizmami. Rosną, oddychają i potrzebują wody lub pokarmu." },
+      { icon: "🔬", visual: "cells", transcript: "Każdy organizm jest zbudowany z komórek. Są tak małe, że zwykle potrzebujemy mikroskopu." },
+      { icon: "🌱", visual: "growing", transcript: "Wzrost, odżywianie, oddychanie, ruch, rozmnażanie i reagowanie to czynności życiowe." },
+      { icon: "🛣️", visual: "road", transcript: "Droga i ławka zostały zrobione przez ludzi. To elementy antropogeniczne. Kamień i rzeka są naturalne." },
+      { icon: "🔦", visual: "stimulus", transcript: "Światło latarki jest bodźcem: zmianą, którą organizm może odebrać." },
+      { icon: "👁️", visual: "receptor", transcript: "Oko ma receptory odbierające światło. Receptor odbiera bodziec i przekazuje informację dalej." },
+      { icon: "👂", visual: "senses", transcript: "Uszy — słuch, oczy — wzrok, nos — węch, język — smak, skóra — dotyk. Kapelusz nadal niczego nie słyszy." },
     ],
-    check: { prompt: "Co w ogrodzie Nitki jest organizmem?", choices: ["królik i roślina", "kapelusz", "wszystko"], answers: ["królik i roślina", "krolik i roslina"] },
+    checks: [
+      { atomId: "NATURE.LIVING_CLASSIFICATION", replayStep: 1, prompt: "Czy grzyb należy do przyrody ożywionej?", choices: ["tak", "nie"], answers: ["tak"] },
+      { atomId: "NATURE.ORGANISM_CELLS", replayStep: 2, prompt: "Z czego są zbudowane organizmy?", choices: ["z komórek", "z kamieni", "z plastiku"], answers: ["z komórek", "z komorek", "komorki"] },
+      { atomId: "NATURE.LIFE_PROCESS_GROWTH", replayStep: 3, prompt: "Dziecko staje się wyższe. Jaką czynność życiową pokazuje?", choices: ["wzrost", "oddychanie", "ruch"], answers: ["wzrost"] },
+      { atomId: "NATURE.ANTHROPOGENIC", replayStep: 4, prompt: "Jaka jest asfaltowa droga?", choices: ["naturalna", "antropogeniczna"], answers: ["antropogeniczna"] },
+      { atomId: "NATURE.STIMULUS", replayStep: 5, prompt: "Latarka świeci w oczy. Co jest bodźcem?", choices: ["światło", "oko", "latarka"], answers: ["światło", "swiatlo"] },
+      { atomId: "NATURE.SENSE_RECEPTOR", replayStep: 7, prompt: "Który narząd odbiera dźwięki?", choices: ["ucho", "oko", "nos"], answers: ["ucho", "uszy"] },
+    ],
   },
   "english-an-apple": {
     id: "nitka-english-an",
     taskId: "english-an-apple",
     subject: "english",
-    title: "An orange scarf",
-    replayStep: 1,
+    title: "Szafa Nitki mówi po angielsku",
     steps: [
-      { audio: "./audio/scenes/nitka-english-1.mp3", lang: "pl-PL", visual: "scarf", transcript: "Nitka wybiera pomarańczowy szalik. Po angielsku orange zaczyna się samogłoską." },
-      { audio: "./audio/scenes/nitka-english-2.mp3", lang: "en-GB", visual: "english-line", transcript: "An orange scarf." },
-      { audio: "./audio/scenes/nitka-english-3.mp3", lang: "pl-PL", visual: "article", transcript: "Przed orange używamy an: an orange scarf." },
+      { icon: "1️⃣3️⃣", visual: "numbers", transcript: "Thirteen to 13. Uwaga: thirty to 30 — brzmi podobnie, ale ma końcówkę -ty." },
+      { icon: "✏️", visual: "classroom", transcript: "Pencil to ołówek, book to książka, desk to biurko, a pencil case to piórnik." },
+      { icon: "👧👧", visual: "pronouns", transcript: "I — ja, you — ty lub wy, he — on, she — ona, it — ono lub rzecz, we — my, they — oni lub one." },
+      { icon: "I am", visual: "english-line", transcript: "Czasownik to be zmienia ubranie: I am, you are, he is, she is, it is, we are, they are." },
+      { icon: "AN", visual: "article", transcript: "Przed dźwiękiem samogłoski używamy an: an apple, an orange scarf. Przed innym dźwiękiem używamy a." },
+      { icon: "🔊", audio: "./audio/scenes/nitka-english-2.mp3", lang: "en-GB", visual: "english-line", transcript: "An orange scarf." },
+      { icon: "🟤", visual: "adjective", transcript: "Po angielsku cecha stoi przed rzeczą: brown desk, red pencil, funny rabbit." },
+      { icon: "👗", visual: "wardrobe", transcript: "Nitka podsumowuje: She is ten. An orange scarf. A brown desk. Kolejność słów trzyma styl w ryzach." },
     ],
-    check: { prompt: "Który napis pasuje do pomarańczowego szalika?", choices: ["a orange scarf", "an orange scarf"], answers: ["an orange scarf"] },
+    checks: [
+      { atomId: "EN.NUMBER_13", replayStep: 0, prompt: "Która liczba to thirteen?", choices: ["12", "13", "30"], answers: ["13", "thirteen"] },
+      { atomId: "EN.CLASSROOM_PENCIL_CASE", replayStep: 1, prompt: "Który napis oznacza piórnik?", choices: ["pencil case", "book", "desk"], answers: ["pencil case"] },
+      { atomId: "EN.PRONOUN_THEY", replayStep: 2, prompt: "Anna i Ola. Który zaimek pasuje?", choices: ["she", "they"], answers: ["they"] },
+      { atomId: "EN.TO_BE_HE", replayStep: 3, prompt: "He ___ ten. Co pasuje?", choices: ["am", "is", "are"], answers: ["is"] },
+      { atomId: "EN.ARTICLE_AN", replayStep: 4, prompt: "Który napis pasuje do pomarańczowego szalika?", choices: ["a orange scarf", "an orange scarf"], answers: ["an orange scarf"] },
+      { atomId: "EN.ADJECTIVE_NOUN_ORDER", replayStep: 6, prompt: "Jak po angielsku powiesz brązowe biurko?", choices: ["brown desk", "desk brown"], answers: ["brown desk", "a brown desk"] },
+    ],
   },
 });
 
 export function getSceneForTask(taskId) {
-  return SCENES[taskId] ?? null;
+  if (SCENES[taskId]) return SCENES[taskId];
+  const subject = TASKS.find(task => task.id === taskId)?.subject;
+  return Object.values(SCENES).find(scene => scene.subject === subject) ?? null;
 }
 
 const PRESENTATIONS = {
@@ -354,7 +388,7 @@ function createSession(currentTaskId = TASKS[0].id) {
     subject: null,
     lastFeedback: "",
     lastResult: "",
-    scene: { taskId: "", step: 0, phase: "story", feedback: "", seenTaskIds: [] },
+    scene: { taskId: "", step: 0, phase: "story", quizIndex: 0, returnToQuiz: false, feedback: "", seenTaskIds: [] },
   };
 }
 
@@ -423,7 +457,11 @@ export function loadState(storage) {
       activeSubject: value.activeSubject ?? "all",
       modeSessions: Object.fromEntries(Object.keys(initial.modeSessions).map(mode => [
         mode,
-        { ...initial.modeSessions[mode], ...value.modeSessions[mode] },
+        {
+          ...initial.modeSessions[mode],
+          ...value.modeSessions[mode],
+          scene: { ...initial.modeSessions[mode].scene, ...value.modeSessions[mode].scene },
+        },
       ])),
     };
   } catch {
@@ -469,21 +507,24 @@ export function getTaskById(id) {
 
 export function shouldOfferScene(state, task) {
   const scene = state.modeSessions[state.activeMode].scene;
+  const lesson = getSceneForTask(task?.id);
   return state.activeMode === "explore"
-    && Boolean(SCENES[task?.id])
-    && !state.knowledge[task.atomId]
-    && !scene.seenTaskIds.includes(task.id);
+    && Boolean(lesson)
+    && !scene.seenTaskIds.includes(lesson.taskId);
 }
 
 export function beginScene(state, taskId) {
-  if (!SCENES[taskId]) return state;
+  const lesson = getSceneForTask(taskId);
+  if (!lesson) return state;
   const next = structuredClone(state);
   next.screen = "learn";
   next.modeSessions[next.activeMode].scene = {
     ...next.modeSessions[next.activeMode].scene,
-    taskId,
+    taskId: lesson.taskId,
     step: 0,
     phase: "story",
+    quizIndex: 0,
+    returnToQuiz: false,
     feedback: "",
   };
   return next;
@@ -494,7 +535,10 @@ export function advanceScene(state) {
   const sceneState = next.modeSessions[next.activeMode].scene;
   const scene = SCENES[sceneState.taskId];
   if (!scene) return state;
-  if (sceneState.step < scene.steps.length - 1) sceneState.step += 1;
+  if (sceneState.returnToQuiz) {
+    sceneState.phase = "check";
+    sceneState.returnToQuiz = false;
+  } else if (sceneState.step < scene.steps.length - 1) sceneState.step += 1;
   else sceneState.phase = "check";
   sceneState.feedback = "";
   return next;
@@ -506,6 +550,8 @@ function finishScene(next, taskId) {
   sceneState.taskId = "";
   sceneState.step = 0;
   sceneState.phase = "story";
+  sceneState.quizIndex = 0;
+  sceneState.returnToQuiz = false;
   sceneState.feedback = "";
 }
 
@@ -514,13 +560,28 @@ export function answerScene(state, value) {
   const sceneState = next.modeSessions[next.activeMode].scene;
   const scene = SCENES[sceneState.taskId];
   if (!scene || sceneState.phase !== "check") return { state, result: "no_response" };
+  const check = scene.checks[sceneState.quizIndex];
   const answer = normalizeAnswer(value);
-  const correct = scene.check.answers.map(normalizeAnswer).includes(answer);
-  if (correct) finishScene(next, scene.taskId);
-  else {
+  const correct = check.answers.map(normalizeAnswer).includes(answer);
+  if (correct) {
+    const current = next.knowledge[check.atomId] ?? { independentSuccesses: 0, supportedSuccesses: 0, contexts: [] };
+    current.supportedSuccesses = (current.supportedSuccesses ?? 0) + 1;
+    current.helpUsed = (current.helpUsed ?? 0) + 1;
+    current.status ??= "SUPPORTED";
+    current.lastSeenAt = Date.now();
+    current.nextReviewAt = Date.now() + 86_400_000;
+    next.knowledge[check.atomId] = current;
+    if (sceneState.quizIndex < scene.checks.length - 1) sceneState.quizIndex += 1;
+    else {
+      finishScene(next, scene.taskId);
+      next.modeSessions[next.activeMode].lastFeedback = "Rozdział skończony. To, co było trudne, wróci później w krótkiej powtórce.";
+      next.screen = "end";
+    }
+  } else {
     sceneState.phase = "story";
-    sceneState.step = scene.replayStep;
-    sceneState.feedback = "Wróćmy tylko do jednego potrzebnego kadru.";
+    sceneState.step = check.replayStep;
+    sceneState.returnToQuiz = true;
+    sceneState.feedback = "Spójrzmy jeszcze raz tylko na potrzebny kadr.";
   }
   return { state: next, result: correct ? "correct" : "incorrect" };
 }
@@ -632,7 +693,7 @@ export function applyAnswer(state, value) {
   }
 
   if (action === ACTIONS.GIVE_EXAMPLE && SCENES[task.id]) {
-    session.scene = { ...session.scene, taskId: task.id, step: 0, phase: "story", feedback: "" };
+    session.scene = { ...session.scene, taskId: task.id, step: 0, phase: "story", quizIndex: 0, returnToQuiz: false, feedback: "" };
   }
 
   session.lastFeedback = action === ACTIONS.END_SESSION && result !== "correct"
@@ -762,7 +823,7 @@ function homeView(state) {
     <p class="intro">Wybierz tryb. ${known ? `Masz rozpoczęte ${known} obszary.` : "Zaczniemy spokojnie."}</p>
     <div class="nitka-home">
       <img src="./images/kroliczka-nitka.png" alt="Króliczka Nitka, projektantka mody i prowadząca misje">
-      <div><p class="eyebrow">Nowe mikro-misje</p><h2>Króliczka Nitka ma plan</h2><p>Krótka historia, jeden sprytny problem i jedno pytanie.</p></div>
+      <div><p class="eyebrow">Nowe obrazkowe rozdziały</p><h2>Króliczka Nitka ma plan</h2><p>Najpierw obrazkowa opowieść pełna wiedzy. Test pojawi się dopiero na końcu.</p></div>
     </div>
     <div class="mode-grid">
       ${Object.entries(MODES).map(([id, mode]) => `<button class="mode-card" data-mode="${id}">
@@ -792,13 +853,13 @@ function explorerMap(state, subject) {
 }
 
 function sceneIntroView(task) {
-  const scene = SCENES[task.id];
+  const scene = getSceneForTask(task.id);
   return `<section class="scene-card scene-intro" aria-labelledby="scene-title">
     <img class="nitka-portrait" src="./images/kroliczka-nitka.png" alt="Króliczka Nitka z notesem i miarką krawiecką">
-    <div><p class="eyebrow">Misja Nitki · ${SUBJECTS[scene.subject]}</p>
+    <div><p class="eyebrow">Obrazkowy rozdział · ${SUBJECTS[scene.subject]}</p>
     <h1 id="scene-title">${escapeHtml(scene.title)}</h1>
-    <p class="intro">Jedna krótka historia. Potem jedno pytanie.</p>
-    <button class="primary-button" type="button" data-scene-start="${task.id}">Zaczynam misję</button></div>
+    <p class="intro">Najpierw ${scene.steps.length} krótkich scen z wiedzą. Dopiero potem test — zawsze jedno pytanie naraz.</p>
+    <button class="primary-button" type="button" data-scene-start="${task.id}">Zaczynam opowieść</button></div>
   </section>`;
 }
 
@@ -806,21 +867,28 @@ function sceneView(state) {
   const sceneState = state.modeSessions[state.activeMode].scene;
   const scene = SCENES[sceneState.taskId];
   if (!scene) return "";
-  if (sceneState.phase === "check") return `<section class="scene-card" aria-labelledby="scene-question">
-    <p class="eyebrow">Jedno pytanie</p><h1 id="scene-question">${escapeHtml(scene.check.prompt)}</h1>
+  if (sceneState.phase === "check") {
+    const check = scene.checks[sceneState.quizIndex];
+    return `<section class="scene-card" aria-labelledby="scene-question">
+    <div class="scene-progress" aria-label="Pytanie ${sceneState.quizIndex + 1} z ${scene.checks.length}">Pytanie ${sceneState.quizIndex + 1}/${scene.checks.length}</div>
+    <p class="eyebrow">Test po całym rozdziale · jedno pytanie</p><h1 id="scene-question">${escapeHtml(check.prompt)}</h1>
     <form id="scene-answer-form" class="answer-form" aria-labelledby="scene-question">
-      <div class="choice-grid">${scene.check.choices.map(choice => `<button class="answer-choice" type="submit" name="answer" value="${escapeHtml(choice)}">${escapeHtml(choice)}</button>`).join("")}</div>
+      <div class="choice-grid">${check.choices.map(choice => `<button class="answer-choice" type="submit" name="answer" value="${escapeHtml(choice)}">${escapeHtml(choice)}</button>`).join("")}</div>
     </form>
   </section>`;
+  }
   const step = scene.steps[sceneState.step];
+  const audio = step.audio ? `<audio id="scene-audio" controls preload="metadata" src="${step.audio}">Nagranie: ${escapeHtml(step.transcript)}</audio>` : "";
+  const replay = step.audio ? '<button class="quiet-button" type="button" data-scene-replay>Posłuchaj jeszcze raz</button>' : "";
+  const nextLabel = sceneState.returnToQuiz ? "Wróć do pytania" : sceneState.step === scene.steps.length - 1 ? "Przejdź do testu" : "Dalej";
   return `<section class="scene-card" aria-labelledby="scene-title">
     <div class="scene-progress" aria-label="Kadr ${sceneState.step + 1} z ${scene.steps.length}">${sceneState.step + 1}/${scene.steps.length}</div>
-    <div class="scene-frame scene-${escapeHtml(step.visual)}"><img src="./images/kroliczka-nitka.png" alt="Króliczka Nitka prowadzi misję"><div class="scene-prop" aria-hidden="true"></div></div>
+    <div class="scene-frame scene-${escapeHtml(step.visual)}"><img src="./images/kroliczka-nitka.png" alt="Króliczka Nitka pokazuje nowe pojęcie"><div class="scene-prop" aria-hidden="true"><span>${escapeHtml(step.icon ?? "")}</span></div></div>
     ${sceneState.feedback ? `<p class="feedback">${escapeHtml(sceneState.feedback)}</p>` : ""}
     <h1 id="scene-title">${escapeHtml(scene.title)}</h1>
     <p class="scene-transcript">${escapeHtml(step.transcript)}</p>
-    <audio id="scene-audio" controls preload="metadata" src="${step.audio}">Nagranie: ${escapeHtml(step.transcript)}</audio>
-    <div class="scene-actions"><button class="quiet-button" type="button" data-scene-replay>Jeszcze raz</button><button class="quiet-button" type="button" data-scene-skip>Pomiń</button><button class="primary-button" type="button" data-scene-next>Dalej</button></div>
+    ${audio}
+    <div class="scene-actions">${replay}<button class="quiet-button" type="button" data-scene-skip>Pomiń rozdział</button><button class="primary-button" type="button" data-scene-next>${nextLabel}</button></div>
   </section>`;
 }
 
@@ -837,10 +905,11 @@ function learningView(state) {
   const feedback = session.lastFeedback ? `<p class="feedback">${escapeHtml(session.lastFeedback)}</p>` : "";
   const modeDetail = state.activeMode === "review" ? `pozostało: ${5 - session.completedCount}` : MODES[state.activeMode].name;
   const resultClass = session.lastResult ? ` result-${session.lastResult}` : "";
+  const listenButton = task.subject === "english" ? `<button class="listen-button" type="button" id="listen-question" data-audio="./audio/${task.id}-${session.currentStep === 1 ? "prerequisite" : "question"}.mp3" data-speech="${escapeHtml(session.currentStep === 1 ? presentation.prerequisiteSpeech : presentation.speech)}" data-lang="${(session.currentStep === 1 ? presentation.prerequisiteSpeechLang : presentation.speechLang) ?? "en-GB"}" aria-label="Posłuchaj pytania"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9v6h4l5 4V5L9 9H5Zm12 1c1.3 1.3 1.3 2.7 0 4m2.5-6.5c3 3 3 6 0 9"/></svg><span>Posłuchaj</span></button>` : "";
   return `${modeNav(state.activeMode)}<div>${subjectSwitcher(state.activeSubject)}${state.activeMode === "explore" ? explorerMap(state, task.subject) : ""}<section class="question-card${resultClass}" aria-labelledby="question-title">
     <div class="progress-line"><span class="subject-tag">${SUBJECTS[task.subject]}</span><span>${modeDetail}</span></div>
     ${visualMarkup(task, session.currentStep)}
-    ${feedback}<div class="question-heading"><h1 id="question-title">${escapeHtml(prompt)}</h1><button class="listen-button" type="button" id="listen-question" data-audio="./audio/${task.id}-${session.currentStep === 1 ? "prerequisite" : "question"}.mp3" data-speech="${escapeHtml(task.subject === "english" ? (session.currentStep === 1 ? presentation.prerequisiteSpeech : presentation.speech) : prompt)}" data-lang="${task.subject === "english" ? (session.currentStep === 1 ? presentation.prerequisiteSpeechLang : presentation.speechLang) ?? "en-GB" : "pl-PL"}" aria-label="Posłuchaj pytania"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9v6h4l5 4V5L9 9H5Zm12 1c1.3 1.3 1.3 2.7 0 4m2.5-6.5c3 3 3 6 0 9"/></svg><span>Posłuchaj</span></button></div>
+    ${feedback}<div class="question-heading"><h1 id="question-title">${escapeHtml(prompt)}</h1>${listenButton}</div>
     <form class="answer-form" id="answer-form" aria-labelledby="question-title">
       <div class="choice-grid">${choices.map(choice => `<button class="answer-choice" type="submit" name="answer" value="${escapeHtml(choice)}">${escapeHtml(choice)}</button>`).join("")}</div>
       <button class="unsure-button" type="submit" name="answer" value="nie wiem">Nie wiem</button>
@@ -931,7 +1000,7 @@ if (typeof document !== "undefined") {
       commit({ ...state, screen: button.dataset.screen }, "", focusSelector);
     }));
     root.querySelectorAll("[data-subject-filter]").forEach(button => button.addEventListener("click", () => commit(switchSubject(state, button.dataset.subjectFilter), "", `[data-subject-filter="${button.dataset.subjectFilter}"]`)));
-    root.querySelector("[data-scene-start]")?.addEventListener("click", event => commit(beginScene(state, event.currentTarget.dataset.sceneStart), "", "#scene-audio"));
+    root.querySelector("[data-scene-start]")?.addEventListener("click", event => commit(beginScene(state, event.currentTarget.dataset.sceneStart), "", "[data-scene-next]"));
     root.querySelector("[data-scene-next]")?.addEventListener("click", () => commit(advanceScene(state), "", "[data-scene-next]"));
     root.querySelector("[data-scene-skip]")?.addEventListener("click", () => commit(skipScene(state), "Scenka pominięta.", ".answer-choice"));
     root.querySelector("[data-scene-replay]")?.addEventListener("click", () => {
