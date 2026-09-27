@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import {
   ACTIONS,
   applyAnswer,
@@ -263,6 +263,15 @@ test("learning view leads with a graphic, listening and large answer choices", (
   assert.doesNotMatch(root.innerHTML, /<input/);
 });
 
+test("every question and prerequisite has a recorded audio file", async () => {
+  for (const task of TASKS) {
+    for (const step of ["question", "prerequisite"]) {
+      const clip = await stat(new URL(`./audio/${task.id}-${step}.mp3`, import.meta.url));
+      assert.ok(clip.size > 1_000, `${task.id}-${step}`);
+    }
+  }
+});
+
 test("a prerequisite question uses a neutral earlier-step graphic", () => {
   const root = { className: "", innerHTML: "" };
   const state = switchMode(createInitialState(), "focus");
@@ -328,6 +337,29 @@ test("speech cleanup keeps its button reference after the click event ends", () 
   assert.equal(utterance.lang, "en-GB");
   assert.equal(classes.has("is-speaking"), true);
   utterance.listeners.end();
+  assert.equal(classes.has("is-speaking"), false);
+});
+
+test("recorded audio plays instead of browser speech synthesis", () => {
+  const classes = new Set();
+  const button = {
+    dataset: { audio: "./audio/clock-minute-hand-question.mp3", speech: "Ile minut?", lang: "pl-PL" },
+    classList: { add: value => classes.add(value), remove: value => classes.delete(value) },
+  };
+  let clip;
+  class FakeAudio {
+    constructor(src) { this.src = src; this.listeners = {}; clip = this; }
+    addEventListener(name, callback) { this.listeners[name] = callback; }
+    play() { this.played = true; return Promise.resolve(); }
+  }
+  const synthesis = { cancel() {}, speak() { throw new Error("synthesis should not run"); } };
+
+  speakQuestion(button, synthesis, null, FakeAudio);
+
+  assert.equal(clip.src, button.dataset.audio);
+  assert.equal(clip.played, true);
+  assert.equal(classes.has("is-speaking"), true);
+  clip.listeners.ended();
   assert.equal(classes.has("is-speaking"), false);
 });
 
