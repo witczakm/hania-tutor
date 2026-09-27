@@ -31,12 +31,12 @@ export const TASKS = [
     subject: "math",
     topic: "elapsed",
     prerequisiteAtomId: "TIME.READ_MINUTES",
-    prompt: "Która godzina będzie 30 minut po 14:45?",
-    answers: ["15:15", "1515"],
-    hint: "Najpierw policz minuty do 15:00.",
-    prerequisitePrompt: "Ile minut brakuje od 14:45 do 15:00?",
-    prerequisiteAnswers: ["15", "pietnascie"],
-    example: "Od 13:50 do 14:00 mija 10 minut.",
+    prompt: "Która godzina będzie 30 minut po 16:35?",
+    answers: ["17:05", "1705"],
+    hint: "Najpierw policz minuty do 17:00.",
+    prerequisitePrompt: "Ile minut brakuje od 16:35 do 17:00?",
+    prerequisiteAnswers: ["25", "dwadziescia piec"],
+    example: "Od 14:45 do 15:00 mija 15 minut.",
     visual: "clock",
   },
   {
@@ -251,7 +251,7 @@ export const SCENES = Object.freeze({
     replayStep: 1,
     steps: [
       { audio: "./audio/scenes/nitka-math-1.mp3", lang: "pl-PL", visual: "runway", transcript: "Wielkie wyzwanie Nitki: przygotować pokaz mody i nie spóźnić kokardy." },
-      { audio: "./audio/scenes/nitka-math-2.mp3", lang: "pl-PL", visual: "clock-start", transcript: "Jest 14:45. Pokaz zaczyna się za 30 minut. Nitka obstawia 15:45, ale jej miarka czasu chyba się zaplątała." },
+      { audio: "./audio/scenes/nitka-math-2.mp3", lang: "pl-PL", visual: "clock-start", transcript: "Jest 14:45. Pokaz za 30 minut. Nitka stawia na 15:45. Czy miarka czasu się zaplątała?" },
       { audio: "./audio/scenes/nitka-math-3.mp3", lang: "pl-PL", visual: "clock-jumps", transcript: "Robimy dwa spokojne skoki: 15 minut do 15:00 i jeszcze 15 minut do 15:15." },
     ],
     check: { prompt: "O której zacznie się pokaz Nitki?", choices: ["15:00", "15:15", "15:45"], answers: ["15:15", "1515"] },
@@ -290,7 +290,7 @@ export function getSceneForTask(taskId) {
 
 const PRESENTATIONS = {
   "clock-minute-hand": { prompt: "Ile minut pokazuje długa wskazówka?", visualLabel: "Zegar z długą wskazówką na jedenastce", choices: ["50", "55", "60"], prerequisiteChoices: ["5", "10", "15"] },
-  "time-after-1445": { prompt: "Jest 14:45. Która godzina będzie za 30 minut?", visualLabel: "Oś czasu od 14:45 o trzydzieści minut do przodu", choices: ["15:05", "15:15", "15:45"], prerequisiteChoices: ["5", "15", "45"] },
+  "time-after-1445": { prompt: "Jest 16:35. Która godzina będzie za 30 minut?", visualLabel: "Oś czasu od szesnastej trzydzieści pięć przez siedemnastą", choices: ["16:55", "17:05", "17:35"], prerequisiteChoices: ["15", "25", "35"] },
   "calendar-next-saturday": { prompt: "Poniedziałek to 8 maja. Kiedy będzie sobota?", visualLabel: "Kartka kalendarza z poniedziałkiem ósmego maja", choices: ["10 maja", "13 maja", "15 maja"], prerequisiteChoices: ["wtorek", "środa", "sobota"] },
   "roman-nine": { prompt: "Jaką liczbę oznacza IX?", visualLabel: "Rzymski zapis IX", choices: ["6", "9", "11"], prerequisiteChoices: ["5", "10", "50"] },
   "length-room-unit": { prompt: "Pokój ma długość 315. Która jednostka pasuje?", visualLabel: "Miarka z długością pokoju trzysta piętnaście", choices: ["cm", "m", "km"], prerequisiteChoices: ["10", "100", "1000"] },
@@ -674,7 +674,7 @@ function visualMarkup(task, step = 0) {
   if (step === 1) {
     const prerequisiteVisuals = {
       "clock-minute-hand": `<circle class="visual-paper" cx="160" cy="90" r="61"/><path d="M160 34v10M216 90h-10M160 146v-10M104 90h10M160 90l47-28"/><circle class="visual-fill" cx="160" cy="90" r="6"/>`,
-      "time-after-1445": `<path d="M65 92h190M239 78l16 14-16 14"/><text x="82" y="65">14:45</text><text x="238" y="65">15:00</text>`,
+      "time-after-1445": `<path d="M65 92h190M239 78l16 14-16 14"/><text x="82" y="65">16:35</text><text x="238" y="65">17:00</text>`,
       "calendar-next-saturday": `<text class="visual-word" x="92" y="102">PON</text><path d="M132 90h56m-14-14 14 14-14 14"/><text class="visual-word" x="238" y="102">?</text>`,
       "roman-nine": `<rect class="visual-paper" x="100" y="28" width="120" height="124" rx="16"/><text class="visual-hero" x="160" y="118">X</text>`,
       "length-room-unit": `<text class="visual-word" x="95" y="102">1 m</text><path d="M130 90h60m-14-14 14 14-14 14"/><text class="visual-word" x="238" y="102">? cm</text>`,
@@ -693,7 +693,7 @@ function visualMarkup(task, step = 0) {
     };
     const prerequisiteLabels = {
       "clock-minute-hand": "Zegar z długą wskazówką na dwójce",
-      "time-after-1445": "Oś czasu od 14:45 do 15:00",
+      "time-after-1445": "Oś czasu od 16:35 do 17:00",
       "calendar-next-saturday": "Poniedziałek, strzałka i następny dzień",
       "roman-nine": "Rzymska liczba X",
       "length-room-unit": "Jeden metr przeliczany na centymetry",
@@ -716,7 +716,7 @@ function visualMarkup(task, step = 0) {
   const close = "</svg></div>";
   const visuals = {
     "clock-minute-hand": `<circle class="visual-paper" cx="160" cy="90" r="67"/><circle cx="160" cy="90" r="61"/><path d="M160 34v10M216 90h-10M160 146v-10M104 90h10"/><path class="clock-hour" d="M160 90l30 20"/><path class="clock-minute" d="M160 90l-31-48"/><circle class="visual-fill" cx="160" cy="90" r="6"/>`,
-    "time-after-1445": `<path d="M38 96h244"/><circle cx="48" cy="96" r="8"/><circle cx="160" cy="96" r="8"/><circle cx="272" cy="96" r="8"/><circle class="travel-dot" cx="48" cy="96" r="13"/><text x="48" y="135">14:45</text><text x="160" y="135">15:00</text><text x="272" y="135">?</text><text class="visual-small" x="160" y="55">+ 30 min</text>`,
+    "time-after-1445": `<path d="M38 96h244"/><circle cx="48" cy="96" r="8"/><circle cx="160" cy="96" r="8"/><circle cx="272" cy="96" r="8"/><circle class="travel-dot" cx="48" cy="96" r="13"/><text x="48" y="135">16:35</text><text x="160" y="135">17:00</text><text x="272" y="135">?</text><text class="visual-small" x="160" y="55">+ 30 min</text>`,
     "calendar-next-saturday": `<rect class="visual-paper" x="75" y="25" width="170" height="135" rx="14"/><path d="M75 62h170M110 25v24M210 25v24"/><text x="160" y="52">MAJ</text><text x="112" y="105">8</text><path class="calendar-path" d="M132 99h64"/><text x="216" y="105">?</text><text class="visual-small" x="110" y="136">PON</text><text class="visual-small" x="216" y="136">SOB</text>`,
     "roman-nine": `<rect class="visual-paper" x="82" y="25" width="156" height="130" rx="18"/><text class="visual-hero" x="160" y="118">IX</text>`,
     "length-room-unit": `<path d="M45 120h230M52 120V82M86 120V96M120 120V82M154 120V96M188 120V82M222 120V96M268 120V82"/><path class="measure-line" d="M52 58h216M52 58l15-10M52 58l15 10M268 58l-15-10M268 58l-15 10"/><text x="160" y="44">315 ?</text>`,

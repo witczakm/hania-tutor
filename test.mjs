@@ -86,7 +86,7 @@ test("a located gap opens its matching scene as the single GIVE_EXAMPLE action",
   const state = createInitialState();
   state.modeSessions.focus.currentTaskId = "time-after-1445";
   state.modeSessions.focus.currentStep = 1;
-  const result = applyAnswer(state, "15");
+  const result = applyAnswer(state, "25");
   assert.equal(result.action, ACTIONS.GIVE_EXAMPLE);
   assert.equal(result.state.modeSessions.focus.scene.taskId, "time-after-1445");
 });
@@ -374,6 +374,22 @@ test("every question and prerequisite has a recorded audio file", async () => {
       assert.ok(clip.size > 1_000, `${task.id}-${step}`);
     }
   }
+});
+
+test("every Nitka scene step has a non-empty recorded clip", async () => {
+  for (const scene of Object.values(SCENES)) {
+    for (const step of scene.steps) {
+      const clip = await stat(new URL(step.audio, import.meta.url));
+      assert.ok(clip.size > 1_000, step.audio);
+    }
+  }
+});
+
+test("the math task transfers the scene rule to a new time", () => {
+  const task = TASKS.find(item => item.id === "time-after-1445");
+  assert.equal(task.prompt.includes("16:35"), true);
+  assert.equal(evaluateAnswer(task, "17:05"), "correct");
+  assert.equal(SCENES[task.id].check.prompt.includes("Nitki"), true);
 });
 
 test("a prerequisite question uses a neutral earlier-step graphic", () => {
