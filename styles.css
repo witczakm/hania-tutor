@@ -470,31 +470,58 @@ h1 {
 
 .scene-frame {
   position: relative;
-  min-height: 320px;
+  aspect-ratio: 16 / 9;
   margin-bottom: 24px;
   overflow: hidden;
   border-radius: 18px;
-  background: linear-gradient(135deg, #e7f0ed, #f7e8dc);
+  background: #d9e6df;
   animation: scene-reveal 420ms cubic-bezier(.16, 1, .3, 1) both;
 }
 
-.scene-frame img { position: absolute; z-index: 1; left: 2%; bottom: -34%; width: min(48%, 250px); }
-.scene-prop { position: absolute; right: 8%; top: 18%; width: 42%; aspect-ratio: 1; border-radius: 50%; background: color-mix(in srgb, var(--accent) 18%, white); }
-.scene-prop { display: grid; place-items: center; box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--accent) 30%, white); }
-.scene-prop span { font-size: clamp(3.8rem, 11vw, 7rem); line-height: 1; filter: drop-shadow(0 7px 9px rgb(36 47 44 / 12%)); animation: prop-breathe 2.8s ease-in-out infinite; }
-.scene-clock-jumps .scene-prop { border-radius: 18px; background: linear-gradient(90deg, #fff 0 31%, #e6d2a5 31% 34%, #fff 34% 65%, #e6d2a5 65% 68%, #fff 68%); }
-.scene-living .scene-prop { background: radial-gradient(circle at 35% 55%, #69a66f 0 18%, transparent 19%), radial-gradient(circle at 70% 55%, #8c6a45 0 18%, transparent 19%); }
-.scene-english-line .scene-prop { border-radius: 18px; background: #fff; box-shadow: inset 0 0 0 3px #347b78; }
-.scene-calendar .scene-prop, .scene-classroom .scene-prop, .scene-wardrobe .scene-prop { border-radius: 22px; background: #fff9ee; }
-.scene-roman .scene-prop, .scene-english-line .scene-prop { border-radius: 22px; background: #fff; }
-.scene-stimulus .scene-prop, .scene-receptor .scene-prop, .scene-senses .scene-prop { background: #e9f2ff; }
+.scene-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(var(--scene-zoom, 1.04));
+  transform-origin: var(--scene-origin, 50% 50%);
+  animation: camera-move 6s ease-out both;
+}
+.scene-shot-left { --scene-zoom: 1.35; --scene-origin: 18% 52%; }
+.scene-shot-upper-left { --scene-zoom: 1.42; --scene-origin: 16% 18%; }
+.scene-shot-clock { --scene-zoom: 1.32; --scene-origin: 47% 28%; }
+.scene-shot-center { --scene-zoom: 1.3; --scene-origin: 52% 48%; }
+.scene-shot-right { --scene-zoom: 1.34; --scene-origin: 84% 46%; }
+.scene-shot-upper-right { --scene-zoom: 1.4; --scene-origin: 86% 20%; }
+.scene-shot-lower { --scene-zoom: 1.34; --scene-origin: 50% 88%; }
+.scene-shot-lower-right { --scene-zoom: 1.4; --scene-origin: 84% 88%; }
+.scene-beat {
+  position: absolute;
+  z-index: 2;
+  left: 18px;
+  bottom: 16px;
+  max-width: min(82%, 620px);
+  margin: 0;
+  padding: 10px 15px;
+  border: 1px solid rgb(255 255 255 / 65%);
+  border-radius: 13px;
+  background: rgb(25 38 35 / 82%);
+  color: white;
+  font-size: clamp(.92rem, 2.5vw, 1.18rem);
+  font-weight: 800;
+  letter-spacing: .01em;
+  box-shadow: 0 8px 25px rgb(14 28 24 / 28%);
+  animation: beat-in 420ms 350ms cubic-bezier(.16, 1, .3, 1) both;
+}
 .scene-progress { margin-bottom: 12px; color: var(--ink-soft); font-weight: 760; }
 .scene-transcript { max-width: 680px; font-size: 1.16rem; line-height: 1.6; }
 .scene-card audio { width: 100%; margin: 4px 0 20px; }
 .scene-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
 
 @keyframes scene-reveal { from { transform: translateY(8px); opacity: .4; } to { transform: translateY(0); opacity: 1; } }
-@keyframes prop-breathe { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-5px) rotate(1deg); } }
+@keyframes camera-move { from { transform: scale(calc(var(--scene-zoom, 1.04) - .03)); } to { transform: scale(var(--scene-zoom, 1.04)); } }
+@keyframes beat-in { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
 
 @media (max-width: 760px) {
   .app-shell { width: min(100% - 24px, 620px); padding-top: 16px; }
@@ -517,7 +544,7 @@ h1 {
   .nitka-home { grid-template-columns: 96px 1fr; gap: 14px; padding: 14px; }
   .nitka-home img { width: 96px; height: 120px; }
   .nitka-portrait { max-height: 280px; }
-  .scene-frame { min-height: 250px; }
+  .scene-beat { left: 10px; right: 10px; bottom: 10px; max-width: none; }
   .scene-actions .primary-button { width: auto; }
 }
 

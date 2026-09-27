@@ -28,7 +28,10 @@ import {
 test("each subject lesson teaches several ideas before its end quiz", () => {
   assert.deepEqual(Object.keys(SCENES), ["time-after-1445", "living-mushroom", "english-an-apple"]);
   Object.values(SCENES).forEach(scene => {
+    assert.match(scene.art, /^\.\/images\/scene-/);
+    assert.ok(scene.artAlt.length > 20);
     assert.ok(scene.steps.length >= 7, scene.id);
+    assert.ok(scene.steps.every(step => step.beat && step.shot), scene.id);
     assert.ok(scene.checks.length >= 5, scene.id);
     scene.checks.forEach(check => {
       assert.equal((check.prompt.match(/\?/g) ?? []).length, 1, check.prompt);
@@ -120,14 +123,23 @@ test("a new explorer task shows one Nitka invitation instead of the task questio
   assert.doesNotMatch(root.innerHTML, /id="answer-form"/);
 });
 
-test("a scene frame keeps a large visual and simple navigation", () => {
+test("a scene frame uses cinematic story art and a visual knowledge beat", () => {
   const root = { className: "", innerHTML: "" };
   const state = beginScene(createInitialState(), "time-after-1445");
   renderApp(root, state);
-  assert.match(root.innerHTML, /scene-prop/);
+  assert.match(root.innerHTML, /class="scene-art"/);
+  assert.match(root.innerHTML, /class="scene-beat"/);
+  assert.doesNotMatch(root.innerHTML, /scene-prop/);
   assert.match(root.innerHTML, /Nitka szykuje pokaz mody/);
   assert.match(root.innerHTML, /data-scene-next/);
   assert.match(root.innerHTML, /data-scene-skip/);
+});
+
+test("each subject chapter has a substantial generated illustration", async () => {
+  for (const scene of Object.values(SCENES)) {
+    const art = await stat(new URL(scene.art, import.meta.url));
+    assert.ok(art.size > 100_000, scene.art);
+  }
 });
 
 test("the scene check replaces playback controls with exactly one question", () => {

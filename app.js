@@ -248,15 +248,17 @@ export const SCENES = Object.freeze({
     taskId: "time-after-1445",
     subject: "math",
     title: "Pokaz mody bez spóźnienia",
+    art: "./images/scene-math-fashion.webp",
+    artAlt: "Nitka w pracowni mody pokazuje zegary, kalendarz, rzymskie oznaczenia ubrań i plan sali z miarką",
     steps: [
-      { icon: "🎀", visual: "runway", transcript: "Nitka szykuje pokaz mody. Musi ogarnąć zegar, kalendarz i miarkę. Kokarda już panikuje." },
-      { icon: "🕚", visual: "clock-start", transcript: "Na zegarze każda liczba to 5 minut. Długa wskazówka na 11 oznacza 55 minut." },
-      { icon: "⏱️", visual: "clock-jumps", transcript: "Od 14:45 do 15:00 jest 15 minut. Jeszcze 15 minut daje 15:15. Razem: 30 minut." },
-      { icon: "📅", visual: "calendar", transcript: "W kalendarzu idziemy dzień po dniu. Od poniedziałku 8 maja do soboty mijamy 5 dni: sobota to 13 maja." },
-      { icon: "Ⅴ", visual: "roman", transcript: "Rzymskie I to 1, V to 5, X to 10. Mniejsza liczba przed większą oznacza odejmowanie." },
-      { icon: "Ⅸ", visual: "roman", transcript: "Dlatego IX to 10 minus 1, czyli 9. Nitka nie zamawia dziewięciu kapeluszy przez pomyłkę." },
-      { icon: "📏", visual: "measure", transcript: "Milimetry mierzą drobiazgi, centymetry małe przedmioty, metry pokój, a kilometry trasę." },
-      { icon: "🏠", visual: "measure", transcript: "Pokój może mieć 315 centymetrów, czyli 3 metry i 15 centymetrów. Nie 315 kilometrów — to byłby bardzo długi pokój." },
+      { shot: "wide", beat: "Misja: pokaz zaczyna się punktualnie", transcript: "Nitka szykuje pokaz mody. Musi ogarnąć zegar, kalendarz i miarkę. Kokarda już panikuje." },
+      { shot: "clock", beat: "11 × 5 minut = 55 minut", transcript: "Na zegarze każda liczba to 5 minut. Długa wskazówka na 11 oznacza 55 minut." },
+      { shot: "right", beat: "14:45 → 15:00 → 15:15", transcript: "Od 14:45 do 15:00 jest 15 minut. Jeszcze 15 minut daje 15:15. Razem: 30 minut." },
+      { shot: "lower", beat: "Poniedziałek 8 + 5 dni = sobota 13", transcript: "W kalendarzu idziemy dzień po dniu. Od poniedziałku 8 maja do soboty mijamy 5 dni: sobota to 13 maja." },
+      { shot: "right", beat: "I = 1 · V = 5 · X = 10", transcript: "Rzymskie I to 1, V to 5, X to 10. Mniejsza liczba przed większą oznacza odejmowanie." },
+      { shot: "right", beat: "IX = 10 − 1 = 9", transcript: "Dlatego IX to 10 minus 1, czyli 9. Nitka nie zamawia dziewięciu kapeluszy przez pomyłkę." },
+      { shot: "lower-right", beat: "drobiazg: mm · przedmiot: cm · pokój: m", transcript: "Milimetry mierzą drobiazgi, centymetry małe przedmioty, metry pokój, a kilometry trasę." },
+      { shot: "lower-right", beat: "315 cm = 3 m 15 cm", transcript: "Pokój może mieć 315 centymetrów, czyli 3 metry i 15 centymetrów. Nie 315 kilometrów — to byłby bardzo długi pokój." },
     ],
     checks: [
       { atomId: "TIME.READ_MINUTES", replayStep: 1, prompt: "Długa wskazówka jest na 11. Ile to minut?", choices: ["50", "55", "60"], answers: ["55"] },
@@ -271,15 +273,17 @@ export const SCENES = Object.freeze({
     taskId: "living-mushroom",
     subject: "nature",
     title: "Ogród, który odpowiada",
+    art: "./images/scene-nature-greenhouse.webp",
+    artAlt: "Nitka w szklarni bada roślinę, grzyb, kamień i kapelusz oraz doświadczenia ze światłem, okiem, dźwiękiem i uchem",
     steps: [
-      { icon: "🌿", visual: "garden", transcript: "Nitka urządza ogród do zdjęcia kolekcji: królik, grzyb, kamień i bardzo elegancki kapelusz." },
-      { icon: "🐇", visual: "living", transcript: "Królik, grzyb i roślina są organizmami. Rosną, oddychają i potrzebują wody lub pokarmu." },
-      { icon: "🔬", visual: "cells", transcript: "Każdy organizm jest zbudowany z komórek. Są tak małe, że zwykle potrzebujemy mikroskopu." },
-      { icon: "🌱", visual: "growing", transcript: "Wzrost, odżywianie, oddychanie, ruch, rozmnażanie i reagowanie to czynności życiowe." },
-      { icon: "🛣️", visual: "road", transcript: "Droga i ławka zostały zrobione przez ludzi. To elementy antropogeniczne. Kamień i rzeka są naturalne." },
-      { icon: "🔦", visual: "stimulus", transcript: "Światło latarki jest bodźcem: zmianą, którą organizm może odebrać." },
-      { icon: "👁️", visual: "receptor", transcript: "Oko ma receptory odbierające światło. Receptor odbiera bodziec i przekazuje informację dalej." },
-      { icon: "👂", visual: "senses", transcript: "Uszy — słuch, oczy — wzrok, nos — węch, język — smak, skóra — dotyk. Kapelusz nadal niczego nie słyszy." },
+      { shot: "wide", beat: "Co tu żyje, a co tylko świetnie wygląda?", transcript: "Nitka urządza ogród do zdjęcia kolekcji: królik, grzyb, kamień i bardzo elegancki kapelusz." },
+      { shot: "left", beat: "organizm rośnie · oddycha · odżywia się", transcript: "Królik, grzyb i roślina są organizmami. Rosną, oddychają i potrzebują wody lub pokarmu." },
+      { shot: "upper-left", beat: "organizm → komórki", transcript: "Każdy organizm jest zbudowany z komórek. Są tak małe, że zwykle potrzebujemy mikroskopu." },
+      { shot: "lower", beat: "nasiono → kiełek → roślina", transcript: "Wzrost, odżywianie, oddychanie, ruch, rozmnażanie i reagowanie to czynności życiowe." },
+      { shot: "center", beat: "ławka: zrobiona przez człowieka", transcript: "Droga i ławka zostały zrobione przez ludzi. To elementy antropogeniczne. Kamień i rzeka są naturalne." },
+      { shot: "upper-right", beat: "światło = bodziec", transcript: "Światło latarki jest bodźcem: zmianą, którą organizm może odebrać." },
+      { shot: "upper-right", beat: "oko ma receptory światła", transcript: "Oko ma receptory odbierające światło. Receptor odbiera bodziec i przekazuje informację dalej." },
+      { shot: "right", beat: "dźwięk → ucho → słuch", transcript: "Uszy — słuch, oczy — wzrok, nos — węch, język — smak, skóra — dotyk. Kapelusz nadal niczego nie słyszy." },
     ],
     checks: [
       { atomId: "NATURE.LIVING_CLASSIFICATION", replayStep: 1, prompt: "Czy grzyb należy do przyrody ożywionej?", choices: ["tak", "nie"], answers: ["tak"] },
@@ -295,15 +299,17 @@ export const SCENES = Object.freeze({
     taskId: "english-an-apple",
     subject: "english",
     title: "Szafa Nitki mówi po angielsku",
+    art: "./images/scene-english-wardrobe.webp",
+    artAlt: "Nitka w modnej garderobie pokazuje pomarańczowy szalik, przybory szkolne, zdjęcia osób i puste dymki do układania angielskich zdań",
     steps: [
-      { icon: "1️⃣3️⃣", visual: "numbers", transcript: "Thirteen to 13. Uwaga: thirty to 30 — brzmi podobnie, ale ma końcówkę -ty." },
-      { icon: "✏️", visual: "classroom", transcript: "Pencil to ołówek, book to książka, desk to biurko, a pencil case to piórnik." },
-      { icon: "👧👧", visual: "pronouns", transcript: "I — ja, you — ty lub wy, he — on, she — ona, it — ono lub rzecz, we — my, they — oni lub one." },
-      { icon: "I am", visual: "english-line", transcript: "Czasownik to be zmienia ubranie: I am, you are, he is, she is, it is, we are, they are." },
-      { icon: "AN", visual: "article", transcript: "Przed dźwiękiem samogłoski używamy an: an apple, an orange scarf. Przed innym dźwiękiem używamy a." },
-      { icon: "🔊", audio: "./audio/scenes/nitka-english-2.mp3", lang: "en-GB", visual: "english-line", transcript: "An orange scarf." },
-      { icon: "🟤", visual: "adjective", transcript: "Po angielsku cecha stoi przed rzeczą: brown desk, red pencil, funny rabbit." },
-      { icon: "👗", visual: "wardrobe", transcript: "Nitka podsumowuje: She is ten. An orange scarf. A brown desk. Kolejność słów trzyma styl w ryzach." },
+      { shot: "wide", beat: "thirteen = 13 · thirty = 30", transcript: "Thirteen to 13. Uwaga: thirty to 30 — brzmi podobnie, ale ma końcówkę -ty." },
+      { shot: "lower-right", beat: "pencil · book · desk · pencil case", transcript: "Pencil to ołówek, book to książka, desk to biurko, a pencil case to piórnik." },
+      { shot: "right", beat: "she · he · they", transcript: "I — ja, you — ty lub wy, he — on, she — ona, it — rzecz, we — my, they — oni lub one." },
+      { shot: "center", beat: "I am · you are · he is", transcript: "Czasownik to be zmienia ubranie: I am, you are, he is, she is, it is, we are, they are." },
+      { shot: "left", beat: "an orange scarf", transcript: "Przed dźwiękiem samogłoski używamy an: an apple, an orange scarf. Przed innym dźwiękiem używamy a." },
+      { shot: "left", beat: "Posłuchaj: an orange scarf", audio: "./audio/scenes/nitka-english-2.mp3", lang: "en-GB", transcript: "An orange scarf." },
+      { shot: "lower", beat: "brown + desk = brown desk", transcript: "Po angielsku cecha stoi przed rzeczą: brown desk, red pencil, funny rabbit." },
+      { shot: "wide", beat: "She is ten. An orange scarf. A brown desk.", transcript: "Nitka podsumowuje: She is ten. An orange scarf. A brown desk. Kolejność słów trzyma styl w ryzach." },
     ],
     checks: [
       { atomId: "EN.NUMBER_13", replayStep: 0, prompt: "Która liczba to thirteen?", choices: ["12", "13", "30"], answers: ["13", "thirteen"] },
@@ -883,7 +889,7 @@ function sceneView(state) {
   const nextLabel = sceneState.returnToQuiz ? "Wróć do pytania" : sceneState.step === scene.steps.length - 1 ? "Przejdź do testu" : "Dalej";
   return `<section class="scene-card" aria-labelledby="scene-title">
     <div class="scene-progress" aria-label="Kadr ${sceneState.step + 1} z ${scene.steps.length}">${sceneState.step + 1}/${scene.steps.length}</div>
-    <div class="scene-frame scene-${escapeHtml(step.visual)}"><img src="./images/kroliczka-nitka.png" alt="Króliczka Nitka pokazuje nowe pojęcie"><div class="scene-prop" aria-hidden="true"><span>${escapeHtml(step.icon ?? "")}</span></div></div>
+    <div class="scene-frame scene-shot-${escapeHtml(step.shot)}"><img class="scene-art" src="${scene.art}" alt="${escapeHtml(scene.artAlt)}"><p class="scene-beat">${escapeHtml(step.beat)}</p></div>
     ${sceneState.feedback ? `<p class="feedback">${escapeHtml(sceneState.feedback)}</p>` : ""}
     <h1 id="scene-title">${escapeHtml(scene.title)}</h1>
     <p class="scene-transcript">${escapeHtml(step.transcript)}</p>
