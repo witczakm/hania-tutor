@@ -242,6 +242,52 @@ export const TASKS = [
   },
 ];
 
+export const SCENES = Object.freeze({
+  "time-after-1445": {
+    id: "nitka-math-time",
+    taskId: "time-after-1445",
+    subject: "math",
+    title: "Pokaz za pół godziny",
+    replayStep: 1,
+    steps: [
+      { audio: "./audio/scenes/nitka-math-1.mp3", lang: "pl-PL", visual: "runway", transcript: "Wielkie wyzwanie Nitki: przygotować pokaz mody i nie spóźnić kokardy." },
+      { audio: "./audio/scenes/nitka-math-2.mp3", lang: "pl-PL", visual: "clock-start", transcript: "Jest 14:45. Pokaz zaczyna się za 30 minut. Nitka obstawia 15:45, ale jej miarka czasu chyba się zaplątała." },
+      { audio: "./audio/scenes/nitka-math-3.mp3", lang: "pl-PL", visual: "clock-jumps", transcript: "Robimy dwa spokojne skoki: 15 minut do 15:00 i jeszcze 15 minut do 15:15." },
+    ],
+    check: { prompt: "O której zacznie się pokaz Nitki?", choices: ["15:00", "15:15", "15:45"], answers: ["15:15", "1515"] },
+  },
+  "living-mushroom": {
+    id: "nitka-nature-organism",
+    taskId: "living-mushroom",
+    subject: "nature",
+    title: "Kapelusz, który nie rośnie",
+    replayStep: 1,
+    steps: [
+      { audio: "./audio/scenes/nitka-nature-1.mp3", lang: "pl-PL", visual: "garden", transcript: "Nitka urządza ogród do zdjęcia nowej kolekcji: królik, roślina i bardzo elegancki kapelusz." },
+      { audio: "./audio/scenes/nitka-nature-2.mp3", lang: "pl-PL", visual: "living", transcript: "Królik i roślina rosną, oddychają i potrzebują wody. To organizmy." },
+      { audio: "./audio/scenes/nitka-nature-3.mp3", lang: "pl-PL", visual: "hat", transcript: "Kapelusz może być w kwiatki, ale sam nie rośnie i nie oddycha. Moda ma granice." },
+    ],
+    check: { prompt: "Co w ogrodzie Nitki jest organizmem?", choices: ["królik i roślina", "kapelusz", "wszystko"], answers: ["królik i roślina", "krolik i roslina"] },
+  },
+  "english-an-apple": {
+    id: "nitka-english-an",
+    taskId: "english-an-apple",
+    subject: "english",
+    title: "An orange scarf",
+    replayStep: 1,
+    steps: [
+      { audio: "./audio/scenes/nitka-english-1.mp3", lang: "pl-PL", visual: "scarf", transcript: "Nitka wybiera pomarańczowy szalik. Po angielsku orange zaczyna się samogłoską." },
+      { audio: "./audio/scenes/nitka-english-2.mp3", lang: "en-GB", visual: "english-line", transcript: "An orange scarf." },
+      { audio: "./audio/scenes/nitka-english-3.mp3", lang: "pl-PL", visual: "article", transcript: "Przed orange używamy an: an orange scarf." },
+    ],
+    check: { prompt: "Który napis pasuje do pomarańczowego szalika?", choices: ["a orange scarf", "an orange scarf"], answers: ["an orange scarf"] },
+  },
+});
+
+export function getSceneForTask(taskId) {
+  return SCENES[taskId] ?? null;
+}
+
 const PRESENTATIONS = {
   "clock-minute-hand": { prompt: "Ile minut pokazuje długa wskazówka?", visualLabel: "Zegar z długą wskazówką na jedenastce", choices: ["50", "55", "60"], prerequisiteChoices: ["5", "10", "15"] },
   "time-after-1445": { prompt: "Jest 14:45. Która godzina będzie za 30 minut?", visualLabel: "Oś czasu od 14:45 o trzydzieści minut do przodu", choices: ["15:05", "15:15", "15:45"], prerequisiteChoices: ["5", "15", "45"] },
@@ -308,6 +354,7 @@ function createSession(currentTaskId = TASKS[0].id) {
     subject: null,
     lastFeedback: "",
     lastResult: "",
+    scene: { taskId: "", step: 0, phase: "story", feedback: "", seenTaskIds: [] },
   };
 }
 
@@ -341,7 +388,7 @@ export function switchMode(state, activeMode) {
 export function switchSubject(state, activeSubject) {
   if (!["all", ...Object.keys(SUBJECTS)].includes(activeSubject)) return state;
   const next = structuredClone(state);
-  const fields = ["currentTaskId", "currentStep", "diagnosticCount", "helpLevel", "consecutiveErrors", "correctStreak", "lastFeedback", "lastResult"];
+  const fields = ["currentTaskId", "currentStep", "diagnosticCount", "helpLevel", "consecutiveErrors", "correctStreak", "lastFeedback", "lastResult", "scene"];
   Object.values(next.modeSessions).forEach(session => {
     session.taskBySubject ??= {};
     session.subjectState ??= {};
@@ -418,6 +465,70 @@ export function selectNextTask(state, modeId = state.activeMode) {
 
 export function getTaskById(id) {
   return TASKS.find(task => task.id === id) ?? TASKS[0];
+}
+
+export function shouldOfferScene(state, task) {
+  const scene = state.modeSessions[state.activeMode].scene;
+  return state.activeMode === "explore"
+    && Boolean(SCENES[task?.id])
+    && !state.knowledge[task.atomId]
+    && !scene.seenTaskIds.includes(task.id);
+}
+
+export function beginScene(state, taskId) {
+  if (!SCENES[taskId]) return state;
+  const next = structuredClone(state);
+  next.modeSessions[next.activeMode].scene = {
+    ...next.modeSessions[next.activeMode].scene,
+    taskId,
+    step: 0,
+    phase: "story",
+    feedback: "",
+  };
+  return next;
+}
+
+export function advanceScene(state) {
+  const next = structuredClone(state);
+  const sceneState = next.modeSessions[next.activeMode].scene;
+  const scene = SCENES[sceneState.taskId];
+  if (!scene) return state;
+  if (sceneState.step < scene.steps.length - 1) sceneState.step += 1;
+  else sceneState.phase = "check";
+  sceneState.feedback = "";
+  return next;
+}
+
+function finishScene(next, taskId) {
+  const sceneState = next.modeSessions[next.activeMode].scene;
+  if (!sceneState.seenTaskIds.includes(taskId)) sceneState.seenTaskIds.push(taskId);
+  sceneState.taskId = "";
+  sceneState.step = 0;
+  sceneState.phase = "story";
+  sceneState.feedback = "";
+}
+
+export function answerScene(state, value) {
+  const next = structuredClone(state);
+  const sceneState = next.modeSessions[next.activeMode].scene;
+  const scene = SCENES[sceneState.taskId];
+  if (!scene || sceneState.phase !== "check") return { state, result: "no_response" };
+  const answer = normalizeAnswer(value);
+  const correct = scene.check.answers.map(normalizeAnswer).includes(answer);
+  if (correct) finishScene(next, scene.taskId);
+  else {
+    sceneState.phase = "story";
+    sceneState.step = scene.replayStep;
+    sceneState.feedback = "Wróćmy tylko do jednego potrzebnego kadru.";
+  }
+  return { state: next, result: correct ? "correct" : "incorrect" };
+}
+
+export function skipScene(state) {
+  const next = structuredClone(state);
+  const taskId = next.modeSessions[next.activeMode].scene.taskId;
+  if (taskId) finishScene(next, taskId);
+  return next;
 }
 
 export function getActionContent(action, task) {
@@ -517,6 +628,10 @@ export function applyAnswer(state, value) {
 
   if (action !== ACTIONS.GIVE_EXAMPLE && [ACTIONS.GIVE_HINT, ACTIONS.CHECK_PREREQUISITE, ACTIONS.SIMPLIFY].includes(action)) {
     session.helpLevel += 1;
+  }
+
+  if (action === ACTIONS.GIVE_EXAMPLE && SCENES[task.id]) {
+    session.scene = { ...session.scene, taskId: task.id, step: 0, phase: "story", feedback: "" };
   }
 
   session.lastFeedback = action === ACTIONS.END_SESSION && result !== "correct"
