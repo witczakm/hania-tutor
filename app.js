@@ -26,6 +26,8 @@ export const TASKS = [
   },
 ];
 
+export const STORAGE_KEY = "hania-tutor-state-v1";
+
 export function normalizeAnswer(value = "") {
   return value
     .trim()
@@ -65,6 +67,37 @@ export function createInitialState() {
     },
     history: [],
   };
+}
+
+export function switchMode(state, activeMode) {
+  if (!state.modeSessions[activeMode]) return state;
+  return { ...state, activeMode };
+}
+
+export function saveState(storage, state) {
+  storage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+export function loadState(storage) {
+  try {
+    const value = JSON.parse(storage.getItem(STORAGE_KEY));
+    return value?.version === 1 && value.knowledge && value.modeSessions
+      ? value
+      : createInitialState();
+  } catch {
+    return createInitialState();
+  }
+}
+
+export function selectNextTask(state, modeId = state.activeMode) {
+  if (modeId === "review") {
+    const dueAtom = Object.entries(state.knowledge)
+      .find(([, knowledge]) => knowledge.status !== "UNSEEN" && knowledge.nextReviewAt <= Date.now())?.[0];
+    return TASKS.find(task => task.atomId === dueAtom) ?? null;
+  }
+
+  const session = state.modeSessions[modeId];
+  return TASKS.find(task => task.id === session?.currentTaskId) ?? TASKS[0];
 }
 
 export function chooseAction(state, task, result) {

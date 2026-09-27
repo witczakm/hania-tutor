@@ -6,3 +6,4 @@ Pre-flight: Task 2 produces switchMode/saveState/loadState/selectNextTask consum
 Pre-flight: Task 3 extends TASKS and produces getTaskById/getActionContent consumed by Task 4; signatures agree.
 Pre-flight: Ruling: static source-grep tests from Task 4 are replaced by browser-observable markup checks where practical; source checks remain only for the no-dependency HTML shell — cost, if wrong: a structural regression could pass while browser behavior fails, covered by manual smoke test.
 Task 1: complete (no git range, tests: node --test test.mjs → 6/6 pass)
+Task 2: complete (tests: node --test test.mjs → 10/10 pass)
