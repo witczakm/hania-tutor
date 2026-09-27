@@ -9,6 +9,7 @@ import {
   evaluateAnswer,
   loadState,
   normalizeAnswer,
+  renderApp,
   saveState,
   selectNextTask,
   switchMode,
@@ -78,6 +79,24 @@ test("corrupt storage falls back to the initial state", () => {
   assert.deepEqual(loadState(storage), createInitialState());
 });
 
+test("incomplete stored sessions fall back safely", () => {
+  const storage = memoryStorage({
+    "hania-tutor-state-v1": JSON.stringify({ version: 1, knowledge: {}, modeSessions: {} }),
+  });
+  assert.deepEqual(loadState(storage), createInitialState());
+});
+
+test("older valid sessions receive new safe defaults", () => {
+  const old = createInitialState();
+  Object.values(old.modeSessions).forEach(session => {
+    delete session.completedCount;
+    delete session.subject;
+  });
+  const loaded = loadState(memoryStorage({ "hania-tutor-state-v1": JSON.stringify(old) }));
+  assert.equal(loaded.modeSessions.review.completedCount, 0);
+  assert.equal(loaded.modeSessions.explore.subject, null);
+});
+
 test("review mode selects a due task and never unseen content", () => {
   const state = createInitialState();
   state.knowledge["TIME.ADD_ACROSS_HOUR"] = { status: "SUPPORTED", nextReviewAt: 0 };
@@ -104,6 +123,61 @@ test("each answer records one allowed action", () => {
   const { state, action } = applyAnswer(createInitialState(), "wrong");
   assert.ok(Object.values(ACTIONS).includes(action));
   assert.equal(state.history.at(-1).action, action);
+});
+
+test("a wrong review answer ends review without starting diagnosis", () => {
+  const state = switchMode(createInitialState(), "review");
+  state.knowledge[TASKS[0].atomId] = { status: "SUPPORTED", nextReviewAt: 0 };
+  const result = applyAnswer(state, "źle");
+  assert.equal(result.action, ACTIONS.END_SESSION);
+  assert.equal(result.state.modeSessions.review.currentStep, 0);
+});
+
+test("review ends after five completed micro-tasks", () => {
+  let state = switchMode(createInitialState(), "review");
+  TASKS.slice(0, 6).forEach(task => { state.knowledge[task.atomId] = { status: "SUPPORTED", nextReviewAt: 0 }; });
+  let result;
+  for (let index = 0; index < 5; index += 1) {
+    const task = selectNextTask(state, "review");
+    result = applyAnswer(state, task.answers[0]);
+    state = result.state;
+  }
+  assert.equal(result.action, ACTIONS.END_SESSION);
+  assert.equal(state.modeSessions.review.completedCount, 5);
+});
+
+test("independent answers in two modes create transfer evidence", () => {
+  let state = createInitialState();
+  state = applyAnswer(state, TASKS[0].answers[0]).state;
+  state.knowledge[TASKS[0].atomId].nextReviewAt = 0;
+  state = switchMode(state, "review");
+  state = applyAnswer(state, TASKS[0].answers[0]).state;
+  assert.equal(state.knowledge[TASKS[0].atomId].status, "TRANSFERRED");
+});
+
+test("explorer respects subject and prerequisite knowledge", () => {
+  const state = switchMode(createInitialState(), "explore");
+  state.modeSessions.explore.subject = "nature";
+  state.modeSessions.explore.currentTaskId = "life-process-growing";
+  assert.equal(selectNextTask(state, "explore").id, "living-mushroom");
+});
+
+test("mode-specific views expose explorer map, review counter and progress history", () => {
+  const root = { className: "", innerHTML: "" };
+  const explore = switchMode(createInitialState(), "explore");
+  renderApp(root, explore);
+  assert.match(root.innerHTML, /Wybierz dziedzinę/);
+  explore.modeSessions.explore.subject = "nature";
+  renderApp(root, explore);
+  assert.match(root.innerHTML, /explorer-map/);
+
+  const review = switchMode(createInitialState(), "review");
+  review.knowledge[TASKS[0].atomId] = { status: "SUPPORTED", nextReviewAt: 0 };
+  renderApp(root, review);
+  assert.match(root.innerHTML, /pozostało: 5/);
+
+  renderApp(root, { ...review, screen: "progress" });
+  assert.match(root.innerHTML, /Ostatnie działania/);
 });
 
 test("HTML exposes the application shell and polite feedback", async () => {
