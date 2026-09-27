@@ -575,7 +575,26 @@ function visualMarkup(task, step = 0) {
       "english-an-apple": `<path class="visual-fill-soft" d="M160 55c-42-22-69 15-56 55 13 39 56 52 80 8 27-51 1-81-24-63Z"/><path d="M160 57c-4-18 2-29 15-36M165 38c13-11 26-8 36-2"/>`,
       "english-brown-desk": `<path class="desk-top" d="M55 65h210v45H55z"/><path d="M80 110v52M240 110v52"/>`,
     };
-    return `<div class="learning-visual prerequisite-visual" data-learning-visual data-visual-step="prerequisite" data-prerequisite-for="${task.id}" role="img" aria-label="Obraz do pytania pomocniczego"><svg viewBox="0 0 320 180" aria-hidden="true" focusable="false">${prerequisiteVisuals[task.id]}</svg></div>`;
+    const prerequisiteLabels = {
+      "clock-minute-hand": "Zegar z długą wskazówką na dwójce",
+      "time-after-1445": "Oś czasu od 14:45 do 15:00",
+      "calendar-next-saturday": "Poniedziałek, strzałka i następny dzień",
+      "roman-nine": "Rzymska liczba X",
+      "length-room-unit": "Jeden metr przeliczany na centymetry",
+      "living-mushroom": "Rosnąca roślina",
+      "organisms-cells": "Sylwetka człowieka jako organizmu",
+      "life-process-growing": "Mała i duża roślina pokazujące wzrost",
+      "anthropogenic-road": "Człowiek obok zbudowanej drogi",
+      "stimulus-light": "Głośnik wysyłający fale dźwiękowe",
+      "senses-sound": "Fale dźwiękowe docierające do ucha",
+      "english-thirteen": "Angielskie słowo ten",
+      "english-pencil-case": "Ołówek",
+      "english-they": "Jedna osoba",
+      "english-he-is": "Zdanie She, puste miejsce, ten",
+      "english-an-apple": "Jabłko",
+      "english-brown-desk": "Biurko",
+    };
+    return `<div class="learning-visual prerequisite-visual" data-learning-visual data-visual-step="prerequisite" data-prerequisite-for="${task.id}" role="img" aria-label="${escapeHtml(prerequisiteLabels[task.id])}"><svg viewBox="0 0 320 180" aria-hidden="true" focusable="false">${prerequisiteVisuals[task.id]}</svg></div>`;
   }
   const open = `<div class="learning-visual visual-${task.visual}" data-learning-visual data-visual-step="main" role="img" aria-label="${escapeHtml(presentation.visualLabel)}"><svg viewBox="0 0 320 180" aria-hidden="true" focusable="false">`;
   const close = "</svg></div>";
@@ -603,10 +622,10 @@ function visualMarkup(task, step = 0) {
 
 function header() {
   return `<header class="topbar">
-    <button class="brand" data-screen="home"><span class="brand-mark">H</span><span>Spokojna nauka</span></button>
+    <button class="brand" data-screen="home" data-nav="brand"><span class="brand-mark">H</span><span>Spokojna nauka</span></button>
     <nav class="top-actions" aria-label="Główna nawigacja">
-      <button class="quiet-button" data-screen="home">Tryby nauki</button>
-      <button class="quiet-button" data-screen="progress">Moje postępy</button>
+      <button class="quiet-button" data-screen="home" data-nav="modes">Tryby nauki</button>
+      <button class="quiet-button" data-screen="progress" data-nav="progress">Moje postępy</button>
     </nav>
   </header>`;
 }
@@ -740,7 +759,10 @@ if (typeof document !== "undefined") {
 
   const bindEvents = () => {
     root.querySelectorAll("[data-mode]").forEach(button => button.addEventListener("click", () => commit(switchMode(state, button.dataset.mode), "", `[data-mode="${button.dataset.mode}"]`)));
-    root.querySelectorAll("[data-screen]").forEach(button => button.addEventListener("click", () => commit({ ...state, screen: button.dataset.screen }, "", `[data-screen="${button.dataset.screen}"]`)));
+    root.querySelectorAll("[data-screen]").forEach(button => button.addEventListener("click", () => {
+      const focusSelector = button.dataset.nav ? `[data-nav="${button.dataset.nav}"]` : `[data-screen="${button.dataset.screen}"]`;
+      commit({ ...state, screen: button.dataset.screen }, "", focusSelector);
+    }));
     root.querySelectorAll("[data-subject-filter]").forEach(button => button.addEventListener("click", () => commit(switchSubject(state, button.dataset.subjectFilter), "", `[data-subject-filter="${button.dataset.subjectFilter}"]`)));
     root.querySelector("#answer-form")?.addEventListener("submit", event => {
       event.preventDefault();

@@ -270,7 +270,16 @@ test("a prerequisite question uses a neutral earlier-step graphic", () => {
   renderApp(root, state);
   assert.match(root.innerHTML, /data-visual-step="prerequisite"/);
   assert.match(root.innerHTML, /data-prerequisite-for="clock-minute-hand"/);
+  assert.match(root.innerHTML, /aria-label="Zegar z długą wskazówką na dwójce"/);
   assert.doesNotMatch(root.innerHTML, /Zegar z długą wskazówką na jedenastce/);
+});
+
+test("header navigation has unique focus targets", () => {
+  const root = { className: "", innerHTML: "" };
+  renderApp(root, createInitialState());
+  assert.equal((root.innerHTML.match(/data-nav="brand"/g) ?? []).length, 1);
+  assert.equal((root.innerHTML.match(/data-nav="modes"/g) ?? []).length, 1);
+  assert.equal((root.innerHTML.match(/data-nav="progress"/g) ?? []).length, 1);
 });
 
 test("vocabulary speech never says the correct answer", () => {
