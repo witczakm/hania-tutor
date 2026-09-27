@@ -321,7 +321,7 @@ export function saveState(storage, state) {
 export function loadState(storage) {
   try {
     const value = JSON.parse(storage.getItem(STORAGE_KEY));
-    if (value?.version !== 1 || !value.knowledge || !value.modeSessions
+    if (value?.version !== 1 || !value.knowledge || !value.modeSessions || !MODES[value.activeMode]
       || !["focus", "explore", "review"].every(mode => value.modeSessions[mode]?.currentTaskId)) {
       return createInitialState();
     }
@@ -469,6 +469,9 @@ export function applyAnswer(state, value) {
     : action === ACTIONS.END_SESSION
       ? "Pięć krótkich powtórek wystarczy. Na dziś ta seria jest skończona."
       : getActionContent(action, task);
+  if (next.activeMode === "review" && action === ACTIONS.END_SESSION && result !== "correct") {
+    next.modeSessions.focus = { ...createSession(task.id), lastFeedback: "Wróćmy spokojnie do punktu, który sprawił trudność." };
+  }
   if (action === ACTIONS.TAKE_BREAK) next.screen = "break";
   if (action === ACTIONS.END_SESSION) next.screen = "end";
 

@@ -97,6 +97,12 @@ test("older valid sessions receive new safe defaults", () => {
   assert.equal(loaded.modeSessions.explore.subject, null);
 });
 
+test("unknown stored active mode falls back safely", () => {
+  const broken = { ...createInitialState(), activeMode: "broken" };
+  const loaded = loadState(memoryStorage({ "hania-tutor-state-v1": JSON.stringify(broken) }));
+  assert.deepEqual(loaded, createInitialState());
+});
+
 test("review mode selects a due task and never unseen content", () => {
   const state = createInitialState();
   state.knowledge["TIME.ADD_ACROSS_HOUR"] = { status: "SUPPORTED", nextReviewAt: 0 };
@@ -131,6 +137,16 @@ test("a wrong review answer ends review without starting diagnosis", () => {
   const result = applyAnswer(state, "źle");
   assert.equal(result.action, ACTIONS.END_SESSION);
   assert.equal(result.state.modeSessions.review.currentStep, 0);
+  assert.equal(result.state.modeSessions.focus.currentTaskId, TASKS[0].id);
+});
+
+test("a review error sends the exact difficult atom to focus mode", () => {
+  const task = TASKS[1];
+  const state = switchMode(createInitialState(), "review");
+  state.knowledge[task.atomId] = { status: "SUPPORTED", nextReviewAt: 0 };
+  state.modeSessions.focus.currentTaskId = "living-mushroom";
+  const result = applyAnswer(state, "źle");
+  assert.equal(result.state.modeSessions.focus.currentTaskId, task.id);
 });
 
 test("review ends after five completed micro-tasks", () => {
