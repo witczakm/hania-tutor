@@ -429,6 +429,52 @@ h1 {
 .empty-state { text-align: center; }
 .empty-state .visual-cue { margin-inline: auto; }
 
+.scene-card {
+  padding: clamp(22px, 4vw, 42px);
+  overflow: hidden;
+  border-radius: 20px;
+  color: #31283b;
+  background: #fff9ef;
+  box-shadow: var(--shadow);
+}
+
+.scene-intro {
+  display: grid;
+  grid-template-columns: minmax(180px, .8fr) minmax(260px, 1.2fr);
+  align-items: center;
+  gap: 28px;
+}
+
+.nitka-portrait {
+  width: 100%;
+  max-height: 430px;
+  object-fit: cover;
+  object-position: 50% 28%;
+  border-radius: 18px;
+}
+
+.scene-frame {
+  position: relative;
+  min-height: 320px;
+  margin-bottom: 24px;
+  overflow: hidden;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #e7f0ed, #f7e8dc);
+  animation: scene-reveal 420ms cubic-bezier(.16, 1, .3, 1) both;
+}
+
+.scene-frame img { position: absolute; z-index: 1; left: 2%; bottom: -34%; width: min(48%, 250px); }
+.scene-prop { position: absolute; right: 8%; top: 18%; width: 42%; aspect-ratio: 1; border-radius: 50%; background: color-mix(in srgb, var(--accent) 18%, white); }
+.scene-clock-jumps .scene-prop { border-radius: 18px; background: linear-gradient(90deg, #fff 0 31%, #e6d2a5 31% 34%, #fff 34% 65%, #e6d2a5 65% 68%, #fff 68%); }
+.scene-living .scene-prop { background: radial-gradient(circle at 35% 55%, #69a66f 0 18%, transparent 19%), radial-gradient(circle at 70% 55%, #8c6a45 0 18%, transparent 19%); }
+.scene-english-line .scene-prop { border-radius: 18px; background: #fff; box-shadow: inset 0 0 0 3px #347b78; }
+.scene-progress { margin-bottom: 12px; color: var(--ink-soft); font-weight: 760; }
+.scene-transcript { max-width: 680px; font-size: 1.16rem; line-height: 1.6; }
+.scene-card audio { width: 100%; margin: 4px 0 20px; }
+.scene-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
+
+@keyframes scene-reveal { from { transform: translateY(8px); opacity: .4; } to { transform: translateY(0); opacity: 1; } }
+
 @media (max-width: 760px) {
   .app-shell { width: min(100% - 24px, 620px); padding-top: 16px; }
   .topbar { margin-bottom: 36px; }
@@ -446,8 +492,13 @@ h1 {
   .listen-button { order: -1; }
   .answer-row { flex-direction: column; }
   .primary-button { width: 100%; }
+  .scene-intro { grid-template-columns: 1fr; }
+  .nitka-portrait { max-height: 280px; }
+  .scene-frame { min-height: 250px; }
+  .scene-actions .primary-button { width: auto; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+  .scene-frame, .scene-frame * { animation: none !important; transform: none !important; }
 }

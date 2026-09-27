@@ -425,6 +425,15 @@ test("CSS includes calm educational motion with a reduced-motion path", async ()
   assert.match(css, /prefers-reduced-motion/);
 });
 
+test("Nitka art exists and scene motion has a reduced-motion path", async () => {
+  const image = await stat(new URL("./images/kroliczka-nitka.png", import.meta.url));
+  const css = await readFile(new URL("./styles.css", import.meta.url), "utf8");
+  assert.ok(image.size > 100_000);
+  assert.match(css, /\.scene-frame/);
+  assert.match(css, /@keyframes scene-reveal/);
+  assert.match(css, /prefers-reduced-motion[\s\S]*\.scene-frame/);
+});
+
 test("speech cleanup keeps its button reference after the click event ends", () => {
   const classes = new Set();
   const button = {
